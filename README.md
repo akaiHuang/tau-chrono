@@ -62,6 +62,18 @@ Real measured P_success values: 0.68 at n_rep=1, decreasing to 0.08 at n_rep=12.
 
 τ-chrono tracking doubles usable ansatz depth (2 to 4). At depth 4: naive tau=0.60 (STOP), τ-chrono tau=0.49 (GO).
 
+### Experiment A: Cost Savings
+
+![Cost savings](results/fig_expA_cost_savings.png)
+
+τ-chrono saves 29% total QPU shots on Bernstein-Vazirani. At n_rep=8, naive requires 3x shots for majority voting; τ-chrono knows the circuit is reliable and runs once — saving 67%.
+
+### Experiment B: Depth Ceiling
+
+![Depth ceiling](results/fig_expB_depth_ceiling.png)
+
+3-qubit entangling mirror circuit on T-9. Naive says STOP at 20 gates; τ-chrono correctly identifies that 50-gate circuits still work (F=0.67). Depth extension: 2.5x. Two circuits saved that naive would have rejected.
+
 ## Why It Works
 
 Independent gate noise models assume each gate fails independently. In reality, noise saturates: a qubit that's already noisy can't get much noisier. The Petz recovery map (Petz, 1986) tracks this saturation through the circuit by propagating a Bayesian reference state alongside the signal state. τ-chrono uses this retrodiction structure to give more accurate fidelity predictions.
