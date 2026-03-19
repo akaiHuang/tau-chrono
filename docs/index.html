@@ -432,9 +432,13 @@ footer a:hover { color: var(--text); }
   function animate() {
     requestAnimationFrame(animate);
     time += 0.003;
-    camera.position.x += (mouse.x * 8 - camera.position.x) * 0.01;
-    camera.position.y += (mouse.y * 5 - camera.position.y) * 0.01;
-    camera.position.z = 50 + Math.sin(time * 0.5) * 3;
+    // Auto-rotate orbit + mouse interaction
+    const autoX = Math.cos(time * 0.4) * 35;
+    const autoZ = Math.sin(time * 0.4) * 35 + 30;
+    const autoY = Math.sin(time * 0.25) * 10;
+    camera.position.x += (autoX + mouse.x * 8 - camera.position.x) * 0.02;
+    camera.position.y += (autoY + mouse.y * 5 - camera.position.y) * 0.02;
+    camera.position.z += (autoZ - camera.position.z) * 0.02;
     camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
   }
