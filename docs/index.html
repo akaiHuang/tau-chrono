@@ -566,10 +566,14 @@ footer a:hover { color: var(--text); }
       <span class="fn">pip install</span> tau-chrono<br>
       <br>
       <span class="cm"># Use</span><br>
-      <span class="kw">from</span> tau_chrono <span class="kw">import</span> PetzPredictor<br>
+      <span class="kw">import</span> numpy <span class="kw">as</span> np<br>
+      <span class="kw">from</span> tau_chrono <span class="kw">import</span> depolarizing, tau_chrono_compose<br>
       <br>
-      predictor = <span class="fn">PetzPredictor</span>(backend)<br>
-      fidelity = predictor.<span class="fn">predict</span>(circuit)
+      gates = [<span class="fn">depolarizing</span>(<span class="str">0.05</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="str">20</span>)]<br>
+      rho = np.<span class="fn">array</span>([[<span class="str">1,0</span>],[<span class="str">0,0</span>]], dtype=complex)<br>
+      sigma = np.<span class="fn">eye</span>(<span class="str">2</span>, dtype=complex) / <span class="str">2</span><br>
+      result = <span class="fn">tau_chrono_compose</span>(gates, sigma_0=sigma, rho=rho)<br>
+      <span class="fn">print</span>(result.improvement_percent) <span class="cm"># 31.0%</span>
     </div>
   </div>
 </section>

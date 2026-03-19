@@ -570,7 +570,7 @@ __all__ = [
     "relative_entropy",
     # composition
     "bayesian_compose",
-    "tau_chrono_compose",
+    "tau_chrono_compose",  # alias for bayesian_compose
     "compose_kraus",
     "compose_kraus_compressed",
     "GateResult",
@@ -580,3 +580,6 @@ __all__ = [
     "matrix_inv_sqrt",
     "commutator_norm",
 ]
+
+# Public alias: tau_chrono_compose = bayesian_compose
+tau_chrono_compose = bayesian_compose
