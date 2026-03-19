@@ -1,0 +1,20 @@
+{
+  "distance": 3,
+  "rounds": 2,
+  "noise_p": 0.005,
+  "n_train": 5000,
+  "n_test": 2000,
+  "n_detectors": 16,
+  "training_losses": [
+    0.14158030627295376,
+    0.03447707877494395,
+    0.022550120251253247,
+    0.019145025103352965,
+    0.017577671859180556
+  ],
+  "mwpm_ler": 0.006,
+  "diffusion_no_tau_ler": 0.04,
+  "diffusion_tau_ler": 0.0485,
+  "train_time_s": 4.900676250457764,
+  "epochs_trained": 5
+}

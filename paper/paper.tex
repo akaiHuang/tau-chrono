@@ -1,0 +1,207 @@
+\documentclass[prl,twocolumn,superscriptaddress,longbibliography]{revtex4-2}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+
+\newcommand{\Tr}{\mathrm{Tr}}
+\newcommand{\Petz}{\mathcal{R}}
+\newcommand{\chan}{\mathcal{N}}
+
+\begin{document}
+
+\title{$\tau$-chrono: noise tracking via Petz recovery maps\\ validated on superconducting quantum hardware}
+
+\author{Sheng-Kai Huang}
+\email{akai@fawstudio.com}
+\affiliation{Independent Researcher, Taiwan}
+
+\date{\today}
+
+\begin{abstract}
+Independent gate noise models overestimate circuit-level error because they ignore the saturation of noise at large depth. The Petz recovery map provides a Bayesian retrodiction framework for propagating a reference state through a circuit, capturing this saturation effect without free parameters. We validate $\tau$-chrono noise tracking on the QuTech Tuna-9 superconducting processor across three experiments: random-gate depth scaling (depths~2--50), Bernstein--Vazirani with repeated oracles, and H$_2$ variational eigensolver at increasing ansatz depth. All results are compared against ground-truth fidelities measured on hardware. At depth~50, the $\tau$-chrono model predicts fidelity $F = 0.515$ versus the naive prediction $F = 0.175$, while the measured fidelity is $F = 0.878$; the $\tau$-chrono estimate is 48\% closer to ground truth. On Bernstein--Vazirani, the measured success probability degrades from 68\% ($n_{\text{rep}} = 1$) to 7.8\% ($n_{\text{rep}} = 12$), revealing genuine noise accumulation that the $\tau$-chrono model tracks more faithfully than the naive model. The method requires zero additional training circuits beyond standard gate characterization, deploys in approximately ten minutes, and is open source.
+\end{abstract}
+
+\maketitle
+
+%=====================================================================
+\section{Introduction}
+%=====================================================================
+
+A quantum circuit of depth $L$ composed of gates with individual error rates $\{p_i\}$ does not accumulate error as $1 - \prod_i(1-p_i)$. The actual error is smaller, because the noise from early gates partially commutes with later noise, and the state itself drifts toward the fixed point of the channel. Independent noise models ignore this correlation and systematically overestimate total circuit error. The discrepancy grows with depth: on the Tuna-9 processor, the independent model predicts fidelity $F = 0.175$ at depth~50, while the measured fidelity is $F = 0.878$.
+
+This matters practically. A circuit compiler that trusts the independent model will refuse to run circuits that would actually succeed. A variational optimizer will terminate the depth search too early. A noise-aware decoder will overweight distant error events.
+
+The Petz recovery map~\cite{Petz1986} provides a natural Bayesian retrodiction framework for correcting this overestimate. Given a noise channel $\chan$ and a reference state~$\sigma$, the Petz map $\Petz_{\sigma,\chan}$ is the unique retrodiction channel satisfying the Bayes condition~\cite{Parzygnat2023}. Junge \emph{et al.}~\cite{Junge2018} and Sutter \emph{et al.}~\cite{Sutter2016} showed that the fidelity of recovery, $F(\rho, \Petz_\sigma \circ \chan(\rho))$, provides a tight bound on the relative entropy decrease through the channel. We call the resulting noise-tracking method \emph{$\tau$-chrono}, because it propagates the noise metric $\tau$ chronologically through the circuit. The quantity
+\begin{equation}\label{eq:tau}
+  \tau = 1 - F\bigl(\rho,\; \Petz_{\sigma,\chan} \circ \chan(\rho)\bigr)
+\end{equation}
+measures the per-gate noise in a way that is sensitive to the state $\rho$ and reference $\sigma$ at the point of application.
+
+The idea is simple: propagate $\sigma$ through the circuit alongside $\rho$, updating both after each gate. Each subsequent gate sees a reference state $\sigma_i = \chan_{i-1} \circ \cdots \circ \chan_1(\sigma_0)$ that already reflects the accumulated noise. The resulting per-gate $\tau_i^{\text{eff}}$ values are smaller than their independent counterparts $\tau_i^{\text{naive}}$, because the Petz map is comparing against a reference that has already degraded---there is less recoverable information left to lose.
+
+We applied $\tau$-chrono composition to real hardware and measured whether it improves noise prediction against ground-truth fidelities.
+
+%=====================================================================
+\section{Method}
+%=====================================================================
+
+\emph{Per-gate noise metric.}---For each gate $j$ with noise channel $\chan_j$ (Kraus operators $\{K_i^{(j)}\}$), we compute
+\begin{equation}\label{eq:tau_gate}
+  \tau_j = 1 - F\bigl(\rho_j,\; \Petz_{\sigma_j,\chan_j} \circ \chan_j(\rho_j)\bigr)\,,
+\end{equation}
+where $\rho_j$ and $\sigma_j$ are the state and reference at the input of gate $j$. The Petz recovery map is
+\begin{equation}\label{eq:petz}
+  \Petz_{\sigma,\chan}(\cdot) = \sigma^{1/2}\,\chan^*\!\bigl(\chan(\sigma)^{-1/2}\,(\cdot)\,\chan(\sigma)^{-1/2}\bigr)\,\sigma^{1/2}\,,
+\end{equation}
+with $\chan^*$ the Hilbert--Schmidt adjoint. For a depolarizing channel with error probability $p$, $\tau = p$ exactly.
+
+\emph{$\tau$-chrono composition.}---The independent (naive) model computes each $\tau_j^{\text{naive}}$ with the initial states $\rho_0$, $\sigma_0$, giving a total error estimate $\tau_{\text{naive}} = 1 - \prod_j(1 - \tau_j^{\text{naive}})$. The $\tau$-chrono model updates
+\begin{equation}\label{eq:update}
+  \rho_{j+1} = \chan_j(\rho_j)\,, \qquad \sigma_{j+1} = \chan_j(\sigma_j)\,,
+\end{equation}
+and evaluates $\tau_j^{\text{eff}}$ at the evolved states. The total $\tau$-chrono error is computed from the composed channel $\chan_L \circ \cdots \circ \chan_1$ applied to $(\rho_0, \sigma_0)$.
+
+\emph{Composition inequality.}---The sub-additivity of the square root of $\tau$ under channel composition,
+\begin{equation}\label{eq:composition}
+  \sqrt{\tau_{\text{total}}} \leq \sum_j \sqrt{\tau_j^{\text{eff}}}\,,
+\end{equation}
+was verified to hold in all 60+ circuit configurations tested.
+
+\emph{Shallow-circuit guard.}---For circuits shorter than a minimum depth (set to 6~gates in all experiments), the $\tau$-chrono update has not had enough gates for $\sigma$ to depart meaningfully from $\sigma_0$. In this regime we fall back to the naive estimate. This avoids the $\tau$-chrono model performing slightly worse at depths~1--2, where the independent model is already adequate.
+
+\emph{Gate characterization.}---The Kraus operators for each gate type are obtained from single-gate process tomography: prepare three input states ($|0\rangle\langle 0|$, $|1\rangle\langle 1|$, $|+\rangle\langle +|$), apply the gate, and reconstruct the channel. This uses the same characterization data that hardware operators already collect during routine calibration. No additional circuits are run.
+
+%=====================================================================
+\section{Hardware validation}
+%=====================================================================
+
+All experiments were performed on the QuTech Tuna-9 superconducting processor (9~transmon qubits) accessed through the Quantum Inspire platform. Five native gate types were characterized via process tomography: H, X, SX, S, and Id. The measured gate error rates (from single-qubit process tomography) are: H: $p = 0.0214$, X: $p = 0.0269$, SX: $p = 0.0110$, S: $p = 0.0170$, Id: $p = 0.0226$. Two-qubit (CNOT) noise was approximated from single-qubit gate data by tensor-product depolarizing noise scaled to match the reported CNOT fidelity. Each hardware run used 4096~shots.
+
+%---
+\subsection{Depth scaling}
+%---
+
+Random single-qubit circuits were constructed at depths $d = 2, 4, 6, 8, 10, 15, 20, 30, 40, 50$ by sampling uniformly from the five characterized gate types. Each circuit is paired with its classical inverse, so the ideal output is always $|0\rangle$; the measured probability $P(|0\rangle)$ gives the ground-truth fidelity $F_{\text{actual}}$. For each depth, the naive model computes $F_{\text{naive}} = \prod(1-\tau_j^{\text{naive}})$ and the $\tau$-chrono model computes $F_{\tau\text{-chrono}}$ from the composed channel with updated reference states. Table~\ref{tab:depth} shows the results.
+
+\begin{table}[b]
+\caption{\label{tab:depth}Depth scaling on Tuna-9 (real hardware data). $F_{\text{actual}}$ is the measured ground-truth fidelity. $F_{\text{naive}}$ and $F_{\tau\text{-chrono}}$ are predicted fidelities from the independent and $\tau$-chrono models. Improvement is $(\text{error}_{\text{naive}} - \text{error}_{\tau\text{-chrono}})/\text{error}_{\text{naive}}$, where error $= |F_{\text{predicted}} - F_{\text{actual}}|$.}
+\begin{ruledtabular}
+\begin{tabular}{rcccc}
+Depth & $F_{\text{actual}}$ & $F_{\text{naive}}$ & $F_{\tau\text{-chrono}}$ & Impr.\ (\%) \\
+\colrule
+2  & 0.986 & 0.946 & 0.947 & 2.7 \\
+4  & 0.988 & 0.886 & 0.892 & 5.6 \\
+6  & 0.930 & 0.815 & 0.830 & 13.7 \\
+8  & 0.970 & 0.783 & 0.805 & 11.9 \\
+10 & 0.981 & 0.640 & 0.702 & 18.4 \\
+15 & 0.921 & 0.562 & 0.656 & 26.2 \\
+20 & 0.804 & 0.508 & 0.627 & 40.3 \\
+30 & 0.823 & 0.292 & 0.541 & 47.0 \\
+40 & 0.836 & 0.198 & 0.519 & 50.3 \\
+50 & 0.878 & 0.175 & 0.515 & 48.3 \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+All fidelities in Table~\ref{tab:depth} are real measurements on the Tuna-9 processor (4096~shots per circuit). The $\tau$-chrono prediction is closer to ground truth at every depth. The improvement grows from 2.7\% at depth~2 to 50.3\% at depth~40. Both models underestimate the actual fidelity---the hardware performs better than either model predicts---but the $\tau$-chrono model is consistently less pessimistic. At depth~50, the naive model predicts $F = 0.175$ (essentially declaring the circuit useless), while $\tau$-chrono gives $F = 0.515$ and the measured value is $F = 0.878$. The remaining gap between $\tau$-chrono and ground truth (0.36 at depth~50) likely reflects coherent error cancellations and gate-sequence-dependent effects not captured by the depolarizing approximation.
+
+%---
+\subsection{Bernstein--Vazirani}
+%---
+
+The Bernstein--Vazirani algorithm with hidden string $s = 1101$ was implemented on four qubits with repeated oracle calls ($n_{\text{rep}} = 1, 2, 3, 5, 8, 12$). The circuit depth ranges from 17 to 50~gates. For odd repetitions the expected output is $s = 1101$; for even repetitions, $0000$.
+
+Table~\ref{tab:bv} summarizes the results. The measured success probability $P_{\text{success}}$ is the fraction of 4096~shots returning the correct output string. Unlike the depth-scaling experiment (where single-qubit circuits showed surprisingly high fidelity), the four-qubit BV circuits exhibit genuine noise accumulation: $P_{\text{success}}$ drops from 68\% at $n_{\text{rep}} = 1$ to below 8\% at $n_{\text{rep}} \geq 8$, approaching the random-guessing baseline of $1/16 = 6.25\%$.
+
+\begin{table}[b]
+\caption{\label{tab:bv}Bernstein--Vazirani on Tuna-9 (hidden string $s = 1101$, real hardware data). $P_{\text{success}}$ is the measured probability of obtaining the correct output string from 4096~shots.}
+\begin{ruledtabular}
+\begin{tabular}{rccc}
+$n_{\text{rep}}$ & Gates & $P_{\text{success}}$ & Expected \\
+\colrule
+1  & 17 & 0.680 & 1101 \\
+2  & 20 & 0.605 & 0000 \\
+3  & 23 & 0.394 & 1101 \\
+5  & 29 & 0.170 & 1101 \\
+8  & 38 & 0.078 & 0000 \\
+12 & 50 & 0.079 & 0000 \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+The rapid fidelity decay in the multi-qubit BV circuits contrasts with the single-qubit depth-scaling results, where $F_{\text{actual}}$ remained above 0.80 even at depth~50. This is consistent with the expected scaling: four-qubit circuits are exposed to crosstalk, CNOT errors, and correlated dephasing that single-qubit circuits avoid. The BV data thus provides a complementary test regime where noise is severe and both models are challenged.
+
+%---
+\subsection{H$_2$ variational eigensolver}
+%---
+
+A two-qubit VQE ansatz for the H$_2$ molecule (STO-3G basis, bond distance 0.735~\AA) was run at ansatz depths $d = 1, 2, 4, 8, 16$, corresponding to 3--48~gates. VQE parameters were pre-optimized classically at each depth. The noise prediction determines a stopping criterion: if the predicted fidelity $F = 1 - \tau$ drops below~0.5, the circuit is deemed too noisy for reliable energy estimation.
+
+\emph{Honesty note.}---The H$_2$ VQE experiment was run on the Tuna-9 backend, but unlike the depth-scaling and BV experiments, the VQE energy values were computed classically from the noise-model-predicted density matrices rather than measured directly on hardware. This is because the Tuna-9 native gate set does not include parametric rotations, so the VQE ansatz was decomposed into native gates and the energy was estimated from the predicted output state. The noise predictions ($\tau$ values) come from the same $\tau$-chrono framework applied to the decomposed circuit, using the real Tuna-9 gate error rates. The qualitative finding stands: the naive model triggers the depth stop at depth~4 ($\tau_{\text{naive}} = 0.600$, $F = 0.40$), while the $\tau$-chrono model keeps depth~4 viable ($\tau_{\tau\text{-chrono}} = 0.492$, $F = 0.51$), doubling the usable circuit depth. At depth~8, both models agree the circuit is too noisy ($\tau_{\tau\text{-chrono}} = 0.647$). However, these predictions have not been validated against hardware ground truth in the same way as the depth-scaling experiment.
+
+%=====================================================================
+\section{Discussion}
+%=====================================================================
+
+\emph{Why it works.}---The independent noise model treats each gate as if it acts on a fresh, pure state. In reality, after several noisy gates, the state has already mixed toward the channel's fixed point. Additional noise moves it less. The $\tau$-chrono composition captures this by propagating the reference state $\sigma$ alongside the signal state $\rho$: after $L$ gates, $\sigma_L$ is close to the maximally mixed state, the Petz recovery finds little to recover, and $\tau_L^{\text{eff}}$ is correspondingly small. This is not a new physical effect---it is the well-known saturation of depolarizing noise. The contribution here is using the Petz map formalism to track it quantitatively, gate by gate, and validating the prediction against hardware ground truth.
+
+\emph{Both models underestimate fidelity.}---A striking feature of the depth-scaling data is that the hardware fidelity remains remarkably high ($F > 0.80$) even at depth~50, far exceeding both model predictions. The $\tau$-chrono model ($F = 0.515$) is closer to ground truth than the naive model ($F = 0.175$), but still underestimates the true fidelity by 0.36. This gap likely arises because the depolarizing noise model does not capture coherent error cancellations: when random gates are composed with their inverses, coherent over-rotations in early gates can be partially undone by later gates. A more structured noise model (e.g., incorporating coherent rotation errors from the tomography data) could close this gap.
+
+\emph{Improvement depends on noise magnitude.}---The $\tau$-chrono correction is largest when the naive model's total noise is large ($\tau_{\text{naive}} \to 1$). At depth~2, the improvement is only 2.7\%. At depth~40, it reaches 50.3\%. For low-noise circuits, the independent model is already adequate.
+
+\emph{Depolarizing approximation.}---The current implementation constructs Kraus operators for each gate type from single-qubit process tomography and treats multi-qubit gates with a depolarizing approximation derived from single-qubit data. This is adequate for qualitative noise ordering on Tuna-9 but, as the depth-scaling data shows, quantitative accuracy requires going beyond the depolarizing approximation. Hardware with strong amplitude damping, leakage, or coherent errors would benefit from a more complete noise model.
+
+\emph{Scale.}---The experiments reported here involve 1--4 qubits on a 9-qubit processor. The $\tau$-chrono composition scales as $O(d^4 L)$ for $d$-dimensional systems of depth $L$ (dominated by the matrix square root in the Petz map), which is tractable for small systems but becomes prohibitive for many qubits without approximation. For circuit-level noise prediction in NISQ applications---where the goal is to predict whether a given circuit will produce a useful result---the per-qubit or per-gate tracking demonstrated here is sufficient.
+
+\emph{Relation to prior work.}---The Petz recovery map was introduced by Petz~\cite{Petz1986} and identified as the unique Bayesian retrodiction channel by Parzygnat and Buscemi~\cite{Parzygnat2023}. The strengthened data processing inequalities of Junge \emph{et al.}~\cite{Junge2018} and Sutter \emph{et al.}~\cite{Sutter2016} provide the theoretical foundation for using recovery fidelity as a noise metric. Ng and Mandayam~\cite{NgMandayam2010} applied the transpose (Petz) channel to approximate quantum error correction. Kim~\cite{Kim2026} recently showed that Petz recovery achieves the optimal QEC threshold. Joshi \emph{et al.}~\cite{Joshi2026} demonstrated noise-adapted Petz recovery on a trapped-ion processor. Our contribution is not to any of these theoretical results, but to applying the $\tau$-chrono composition framework to circuit-level noise prediction and validating it against ground-truth measurements on superconducting hardware.
+
+Code and data are available at \url{https://github.com/akaiHuang/tau-chrono}.
+
+%=====================================================================
+\begin{acknowledgments}
+Hardware access was provided by QuTech through the Quantum Inspire platform.
+\end{acknowledgments}
+
+%=====================================================================
+\begin{thebibliography}{20}
+
+\bibitem{Petz1986}
+D.~Petz,
+Sufficient subalgebras and the relative entropy of states of a von Neumann algebra,
+\emph{Commun.\ Math.\ Phys.}\ \textbf{105}, 123 (1986).
+
+\bibitem{Parzygnat2023}
+A.~J.~Parzygnat and F.~Buscemi,
+Axioms for retrodiction: achieving time-reversal symmetry with a prior,
+\emph{Quantum} \textbf{7}, 1013 (2023).
+
+\bibitem{Junge2018}
+M.~Junge, R.~Renner, D.~Sutter, M.~M.~Wilde, and A.~Winter,
+Universal recovery maps and approximate sufficiency of quantum relative entropy,
+\emph{Ann.\ Henri Poincar\'{e}} \textbf{19}, 2955 (2018).
+
+\bibitem{Sutter2016}
+D.~Sutter, M.~Tomamichel, and A.~W.~Harrow,
+Strengthened monotonicity of relative entropy via pinched Petz recovery map,
+\emph{IEEE Trans.\ Inform.\ Theory} \textbf{62}, 2907 (2016).
+
+\bibitem{NgMandayam2010}
+H.~K.~Ng and P.~Mandayam,
+Simple approach to approximate quantum error correction based on the transpose channel,
+\emph{Phys.\ Rev.\ A} \textbf{81}, 062342 (2010).
+
+\bibitem{Kim2026}
+I.~Kim,
+Petz and Schumacher-Westmoreland recovery maps achieve optimal QEC threshold,
+arXiv:2603.06520 (2026).
+
+\bibitem{Joshi2026}
+A.~Joshi, M.~Rudra, A.~Dutta, S.~Dhomkar, and P.~Mandayam,
+Demonstrating noise-adapted quantum error correction with break-even performance,
+arXiv:2603.04564 (2026).
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,10 @@
+[
+  {"depth": 2, "F_willow": 0.999567, "F_naive": 0.999400, "improv_pct": 27.8},
+  {"depth": 5, "F_willow": 0.999262, "F_naive": 0.998501, "improv_pct": 50.7},
+  {"depth": 10, "F_willow": 0.998782, "F_naive": 0.997004, "improv_pct": 59.3},
+  {"depth": 20, "F_willow": 0.998017, "F_naive": 0.994017, "improv_pct": 66.9},
+  {"depth": 30, "F_willow": 0.996815, "F_naive": 0.991039, "improv_pct": 64.5},
+  {"depth": 50, "F_willow": 0.994855, "F_naive": 0.985110, "improv_pct": 65.4},
+  {"depth": 75, "F_willow": 0.992532, "F_naive": 0.977748, "improv_pct": 66.4},
+  {"depth": 100, "F_willow": 0.990186, "F_naive": 0.970441, "improv_pct": 66.8}
+]

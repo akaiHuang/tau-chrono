@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>τ-chrono — noise tracking for quantum circuits</title>
+<meta name="description" content="τ-chrono: noise tracking for quantum circuits using the Petz recovery map. 26.4% more accurate on average on real hardware, zero training circuits.">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+  --bg: #000;
+  --bg-card: #111;
+  --bg-card-hover: #161616;
+  --text: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #6e6e73;
+  --blue: #2997ff;
+  --purple: #bf5af2;
+  --green: #30d158;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --yellow: #ffd60a;
+  --grad: linear-gradient(90deg, #2997ff, #bf5af2, #ff375f);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+a { text-decoration: none; color: var(--blue); }
+a:hover { color: #0a84ff; }
+
+/* Nav */
+nav {
+  position: fixed; top: 0; width: 100%; z-index: 100;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.nav-in {
+  max-width: 980px; margin: 0 auto; padding: 0 24px;
+  height: 48px; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-in .logo { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.nav-in .logo span { color: #fff; }
+.btn-gh {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: 20px;
+  background: rgba(255,255,255,.1); color: var(--text);
+  font-size: 13px; font-weight: 500;
+  transition: background .2s;
+}
+.btn-gh:hover { background: rgba(255,255,255,.18); color: var(--text); }
+.btn-gh svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* Hero */
+.hero {
+  min-height: 90vh; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 120px 24px 80px;
+  position: relative; overflow: hidden;
+}
+.hero h1 {
+  font-size: clamp(56px, 10vw, 96px);
+  font-weight: 700; letter-spacing: -2px;
+  color: #fff;
+  margin-bottom: 20px;
+}
+.hero .sub {
+  font-size: clamp(18px, 3vw, 24px);
+  color: var(--text-2); max-width: 640px; margin: 0 auto 32px;
+  font-weight: 400; line-height: 1.5;
+}
+.hero .btn-hero {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px; border-radius: 28px;
+  background: var(--blue); color: #fff;
+  font-size: 16px; font-weight: 600;
+  transition: transform .2s, background .2s;
+}
+.hero .btn-hero:hover { background: #0a84ff; color: #fff; transform: scale(1.04); }
+.hero .btn-hero svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Sections */
+.sec {
+  padding: 100px 24px;
+}
+.sec-inner {
+  max-width: 980px; margin: 0 auto;
+}
+.sec-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700; letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+.sec-sub {
+  font-size: 17px; color: var(--text-2);
+  max-width: 700px; line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+/* Result cards */
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: transform .2s, border-color .2s;
+}
+.result-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+}
+.result-num {
+  font-size: 42px; font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+.result-num.blue { color: var(--blue); }
+.result-num.green { color: var(--green); }
+.result-num.purple { color: var(--purple); }
+.result-num.orange { color: var(--orange); }
+.result-label {
+  font-size: 14px; color: var(--text-2); line-height: 1.4;
+}
+
+/* Chart */
+.chart-wrap {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 32px;
+}
+.chart-wrap canvas {
+  max-height: 400px;
+}
+
+/* Explanation */
+.explain-box {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 40px;
+  font-size: 17px;
+  color: var(--text-2);
+  line-height: 1.8;
+  max-width: 760px;
+}
+
+/* Applications */
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.app-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 32px;
+  transition: transform .2s, border-color .2s;
+}
+.app-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+}
+.app-card h3 {
+  font-size: 18px; font-weight: 600;
+  margin-bottom: 10px;
+}
+.app-card p {
+  font-size: 15px; color: var(--text-2); line-height: 1.6;
+}
+.app-icon {
+  font-size: 28px; margin-bottom: 14px; display: block;
+}
+
+/* Limitations */
+.limit-list {
+  list-style: none;
+  max-width: 700px;
+}
+.limit-list li {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: 16px;
+  color: var(--text-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.5;
+}
+.limit-list li:last-child { border-bottom: none; }
+.limit-dot {
+  width: 6px; height: 6px;
+  background: var(--orange);
+  border-radius: 50%;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+/* Code block */
+.code-block {
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 28px 32px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-2);
+  overflow-x: auto;
+  max-width: 640px;
+}
+.code-block .kw { color: var(--purple); }
+.code-block .fn { color: var(--blue); }
+.code-block .str { color: var(--green); }
+.code-block .cm { color: var(--text-3); }
+
+/* Figure grid */
+.fig-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+.fig-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform .2s, border-color .2s;
+}
+.fig-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+}
+.fig-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.fig-caption {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+/* Paper section */
+.paper-box {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 760px;
+}
+.paper-box h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.paper-box p {
+  font-size: 15px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.paper-box .btn-paper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.1);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background .2s;
+  margin-top: 8px;
+  margin-right: 12px;
+}
+.paper-box .btn-paper:hover {
+  background: rgba(255,255,255,.18);
+  color: var(--text);
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 48px 24px;
+  text-align: center;
+}
+footer p {
+  font-size: 13px; color: var(--text-3); line-height: 1.8;
+}
+footer a { color: var(--text-2); }
+footer a:hover { color: var(--text); }
+
+/* Fade-in */
+.fade {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.fade.vis {
+  opacity: 1; transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .sec { padding: 64px 20px; }
+  .result-grid { grid-template-columns: 1fr 1fr; }
+  .result-num { font-size: 32px; }
+  .result-card { padding: 24px 16px; }
+  .chart-wrap { padding: 20px 16px; }
+  .explain-box { padding: 28px 20px; }
+  .app-grid { grid-template-columns: 1fr; }
+  .fig-grid { grid-template-columns: 1fr; }
+  .code-block { padding: 20px; font-size: 13px; }
+  .paper-box { padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-in">
+    <div class="logo"><span>τ-chrono</span></div>
+    <a href="https://github.com/akaiHuang/tau-chrono" target="_blank" class="btn-gh">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <canvas id="cosmic-web" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"></canvas>
+  <div style="position:relative; z-index:1;">
+    <h1>τ-chrono</h1>
+    <p class="sub">Noise tracking for quantum circuits via Petz recovery maps.<br>26.4% more accurate on average. Wins at all 10 tested depths.</p>
+    <a href="https://github.com/akaiHuang/tau-chrono" target="_blank" class="btn-hero">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- Three.js Cosmic Web Background -->
+<script>
+(function() {
+  const canvas = document.getElementById('cosmic-web');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+  renderer.setClearColor(0x000000, 1);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const hero = canvas.parentElement;
+  renderer.setSize(hero.offsetWidth, hero.offsetHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, hero.offsetWidth / hero.offsetHeight, 0.1, 200);
+  camera.position.set(40, 30, 50);
+
+  // === Khronon-style filamentary cosmic web ===
+  const GN = 48;
+  function hashNoise3D(ix,iy,iz){let h=ix*374761393+iy*668265263+iz*1274126177;h=(h^(h>>13))*1103515245;h=h^(h>>16);return(h&0x7fffffff)/0x7fffffff;}
+  function sstep(t){return t*t*t*(t*(t*6-15)+10);}
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function valueNoise3D(x,y,z){const ix=Math.floor(x),iy=Math.floor(y),iz=Math.floor(z);const fx=sstep(x-ix),fy=sstep(y-iy),fz=sstep(z-iz);return lerp(lerp(lerp(hashNoise3D(ix,iy,iz),hashNoise3D(ix+1,iy,iz),fx),lerp(hashNoise3D(ix,iy+1,iz),hashNoise3D(ix+1,iy+1,iz),fx),fy),lerp(lerp(hashNoise3D(ix,iy,iz+1),hashNoise3D(ix+1,iy,iz+1),fx),lerp(hashNoise3D(ix,iy+1,iz+1),hashNoise3D(ix+1,iy+1,iz+1),fx),fy),fz);}
+  function fbm(x,y,z,oct,lac,g){let v=0,a=1,f=1,m=0;for(let o=0;o<oct;o++){v+=a*valueNoise3D(x*f,y*f,z*f);m+=a;a*=g;f*=lac;}return v/m;}
+
+  const sc=3.5, ox=137.7, oy=42.3, oz=88.1;
+  const threshold = 0.25;
+  const dummy = new THREE.Object3D();
+  const cubeGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+  const cubeMat = new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+
+  let count = 0;
+  const densities = [], positions = [];
+  for(let iz=0;iz<GN;iz++) for(let iy=0;iy<GN;iy++) for(let ix=0;ix<GN;ix++){
+    const x=ix/GN*sc+ox, y=iy/GN*sc+oy, z=iz/GN*sc+oz;
+    const n=fbm(x,y,z,4,2.2,0.45), ridge=1-Math.abs(2*n-1), fil=Math.pow(ridge,3);
+    const det=fbm(x*2.5+50,y*2.5+50,z*2.5+50,2,2,0.3), comb=fil*(0.7+0.3*det);
+    const d = comb > 0.15 ? comb : comb*0.1;
+    if(d > threshold){ densities.push(d); positions.push(ix-GN/2, iy-GN/2, iz-GN/2); count++; }
+  }
+
+  const instancedMesh = new THREE.InstancedMesh(cubeGeo, cubeMat, count);
+  const colorAttr = new THREE.InstancedBufferAttribute(new Float32Array(count*3), 3);
+
+  function infernoColor(t){
+    t = Math.max(0, Math.min(1, t));
+    const r = t * 0.4;
+    const g = t * 0.15;
+    const b = 0.15 + t * 0.6;
+    return [r, g, b];
+  }
+
+  const maxD = Math.max(...densities);
+  for(let i=0;i<count;i++){
+    dummy.position.set(positions[i*3], positions[i*3+1], positions[i*3+2]);
+    const s = 0.5 + (densities[i]/maxD)*0.5;
+    dummy.scale.set(s, s, s);
+    dummy.updateMatrix();
+    instancedMesh.setMatrixAt(i, dummy.matrix);
+    const [r,g,b] = infernoColor(densities[i]/maxD);
+    colorAttr.setXYZ(i, r, g, b);
+  }
+  instancedMesh.instanceColor = colorAttr;
+  instancedMesh.instanceMatrix.needsUpdate = true;
+  cubeMat.opacity = 0.06;
+  scene.add(instancedMesh);
+
+  let mouse = { x: 0, y: 0 };
+  let time = 0;
+  hero.addEventListener('mousemove', (e) => {
+    mouse.x = (e.clientX / hero.offsetWidth - 0.5) * 2;
+    mouse.y = -(e.clientY / hero.offsetHeight - 0.5) * 2;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.003;
+    camera.position.x += (mouse.x * 8 - camera.position.x) * 0.01;
+    camera.position.y += (mouse.y * 5 - camera.position.y) * 0.01;
+    camera.position.z = 50 + Math.sin(time * 0.5) * 3;
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(hero.offsetWidth, hero.offsetHeight);
+    camera.aspect = hero.offsetWidth / hero.offsetHeight;
+    camera.updateProjectionMatrix();
+  });
+})();
+</script>
+
+<!-- Section 1: The Result -->
+<section class="sec" id="results" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">The Result</h2>
+    <p class="sec-sub">We applied the Petz recovery map to predict quantum circuit noise. Validated on QuTech Tuna-9 superconducting hardware:</p>
+    <div class="result-grid">
+      <div class="result-card">
+        <div class="result-num blue">48.3%</div>
+        <div class="result-label">More accurate noise prediction<br>at depth 50 (Tuna-9)</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num green">26.4%</div>
+        <div class="result-label">Average improvement<br>across all tested depths</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num purple">10/10</div>
+        <div class="result-label">Depths where &tau;-chrono<br>beats independent model</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num orange">0</div>
+        <div class="result-label">Training circuits needed<br>~10 min from calibration data</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 2: Depth Scaling Chart -->
+<section class="sec" id="scaling">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Depth Scaling</h2>
+    <p class="sec-sub">&tau;-chrono prediction is closer to actual measured fidelity than the independent model at all tested depths. Improvement grows with circuit depth.</p>
+    <div class="chart-wrap">
+      <canvas id="depthChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- Section 2b: Experiment Figures -->
+<section class="sec" id="figures" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Experiment Details</h2>
+    <p class="sec-sub">All data from real hardware runs on QuTech Tuna-9 (9 transmon qubits, 4096 shots per circuit).</p>
+    <div class="fig-grid">
+      <div class="fig-card">
+        <img src="img/fig_bernstein_vazirani.png" alt="Bernstein-Vazirani results" loading="lazy">
+        <p class="fig-caption">Bernstein-Vazirani (s=1011): real measured P<sub>success</sub> from 0.68 (n<sub>rep</sub>=1) down to 0.08 (n<sub>rep</sub>=12). &tau;-chrono tracks the decline more accurately than the independent model.</p>
+      </div>
+      <div class="fig-card">
+        <img src="img/fig_h2_vqe.png" alt="H2 VQE depth comparison" loading="lazy">
+        <p class="fig-caption">H&sub2; VQE: naive model says stop at depth 4 (&tau;=0.60). &tau;-chrono keeps depth 4 viable (&tau;=0.49), doubling usable circuit depth.</p>
+      </div>
+      <div class="fig-card">
+        <img src="img/fig_composition_inequality.png" alt="Composition inequality" loading="lazy">
+        <p class="fig-caption">Composition inequality &radic;&tau;<sub>total</sub> &le; &Sigma;&radic;&tau;<sub>i</sub> verified across all 65 circuit configurations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: Why It Works -->
+<section class="sec" id="why" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Why It Works</h2>
+    <div class="explain-box">
+      <p>Independent noise models assume each gate fails independently. In reality, noise saturates &mdash; a qubit that&rsquo;s already noisy can&rsquo;t get much noisier.</p>
+      <p style="margin-top:16px;">The Petz recovery map (Petz, 1986) provides the mathematically correct way to track this saturation through the circuit. &tau;-chrono uses Bayesian retrodiction to update noise estimates conditioned on what has already happened, giving predictions that are closer to actual measured fidelity at every tested depth.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 4: Applications -->
+<section class="sec" id="applications">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Applications</h2>
+    <div class="app-grid">
+      <div class="app-card">
+        <span class="app-icon" style="color:var(--blue);">H&#x2082;</span>
+        <h3>Molecular Simulation (VQE)</h3>
+        <p>&tau;-chrono tracking doubles usable ansatz depth for H&sub2; VQE. The naive model stops at depth 2; &tau;-chrono extends to depth 4 with &tau;=0.49.</p>
+      </div>
+      <div class="app-card">
+        <span class="app-icon" style="color:var(--green);">BV</span>
+        <h3>Bernstein-Vazirani</h3>
+        <p>&tau;-chrono provides more accurate success probability prediction for structured quantum algorithms. Real measured P<sub>success</sub> tracked from 0.68 down to 0.08.</p>
+      </div>
+      <div class="app-card">
+        <span class="app-icon" style="color:var(--purple);">?</span>
+        <h3>Circuit Pre-screening</h3>
+        <p>Know before you run &mdash; avoid wasting QPU time on circuits that won&rsquo;t produce useful results at the target depth.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 5: Honest Limitations -->
+<section class="sec" id="limitations" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Limitations</h2>
+    <p class="sec-sub">We believe in honest reporting. Here is what this approach cannot do.</p>
+    <ul class="limit-list">
+      <li><span class="limit-dot"></span>Tested on small, noisy hardware (QuTech Tuna-9, 5 qubits). Results on larger processors are unverified.</li>
+      <li><span class="limit-dot"></span>On low-noise hardware (Google Willow), improvement is only ~2.5%. The benefit scales with noise magnitude.</li>
+      <li><span class="limit-dot"></span>Not a replacement for quantum error correction or error mitigation. This is a noise prediction tool.</li>
+      <li><span class="limit-dot"></span>Improvement depends on the degree of noise correlation in the hardware. Independent noise yields no benefit.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Section 6: How to Use -->
+<section class="sec" id="usage">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">How to Use</h2>
+    <p class="sec-sub">Three lines of code. No training data needed.</p>
+    <div class="code-block">
+      <span class="cm"># Install</span><br>
+      <span class="fn">pip install</span> tau-chrono<br>
+      <br>
+      <span class="cm"># Use</span><br>
+      <span class="kw">from</span> tau_chrono <span class="kw">import</span> PetzPredictor<br>
+      <br>
+      predictor = <span class="fn">PetzPredictor</span>(backend)<br>
+      fidelity = predictor.<span class="fn">predict</span>(circuit)
+    </div>
+  </div>
+</section>
+
+<!-- Section 7: Paper -->
+<section class="sec" id="paper" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Paper</h2>
+    <div class="paper-box">
+      <h3>&tau;-chrono: noise tracking via Petz recovery maps, validated on superconducting quantum hardware</h3>
+      <p>Sheng-Kai Huang (2026)</p>
+      <p>We applied Bayesian composition using the Petz recovery map to predict circuit-level noise on the QuTech Tuna-9 processor. &tau;-chrono is 26.4% more accurate on average than the independent gate model, winning at all 10 tested depths (peak: 48.3% at depth 50). For H&sub2; VQE, &tau;-chrono tracking doubles the usable ansatz depth.</p>
+      <a href="https://github.com/akaiHuang/tau-chrono/blob/master/paper/paper.tex" target="_blank" class="btn-paper">LaTeX source</a>
+      <a href="https://github.com/akaiHuang/tau-chrono/blob/master/paper/paper.pdf" target="_blank" class="btn-paper">PDF</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p style="margin-bottom:8px;">
+    <a href="https://github.com/akaiHuang/tau-chrono" target="_blank">GitHub</a>
+  </p>
+  <p>Author: Sheng-Kai Huang</p>
+  <p style="margin-top:12px;">
+    Built on: Petz (1986) &middot; Parzygnat &amp; Buscemi (2023) &middot; Junge et al. (2018)
+  </p>
+</footer>
+
+<!-- Scripts -->
+<script>
+// ── Fade-in observer ──
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); });
+}, { threshold: 0.15 });
+document.querySelectorAll('.fade').forEach(el => obs.observe(el));
+
+// ── Chart.js config ──
+Chart.defaults.color = '#a1a1a6';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+
+// ── Depth Scaling Chart ──
+const depthLabels = [2, 4, 6, 8, 10, 15, 20, 30, 40, 50];
+const improvData = [2.3, 9.0, 1.4, 9.0, 13.2, 22.5, 29.9, 38.2, 43.2, 48.3];
+
+new Chart(document.getElementById('depthChart'), {
+  type: 'line',
+  data: {
+    labels: depthLabels,
+    datasets: [{
+      label: '\u03C4-chrono improvement over independent gate model (%)',
+      data: improvData,
+      borderColor: '#2997ff',
+      backgroundColor: 'rgba(41,151,255,0.08)',
+      borderWidth: 3,
+      pointRadius: 6,
+      pointBackgroundColor: '#2997ff',
+      pointBorderColor: '#2997ff',
+      pointHoverRadius: 8,
+      tension: 0.3,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    aspectRatio: 2,
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { padding: 20, usePointStyle: true, pointStyle: 'circle', font: { size: 13 } }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(17,17,17,0.95)',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        titleFont: { weight: '600' },
+        padding: 12,
+        cornerRadius: 8,
+        callbacks: {
+          title: function(ctx) { return 'Depth ' + ctx[0].label; },
+          label: function(ctx) { return 'Improvement: +' + ctx.parsed.y.toFixed(1) + '%'; }
+        }
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Circuit Depth', font: { size: 13, weight: '500' } },
+        grid: { color: 'rgba(255,255,255,0.03)' }
+      },
+      y: {
+        title: { display: true, text: 'Improvement over Independent Model (%)', font: { size: 13, weight: '500' } },
+        min: 0,
+        max: 55,
+        grid: { color: 'rgba(255,255,255,0.03)' }
+      }
+    }
+  }
+});
+
+// ── Smooth scroll ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if(t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>

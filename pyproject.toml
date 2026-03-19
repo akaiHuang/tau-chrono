@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tau-chrono"
+version = "0.1.0"
+description = "Bayesian noise tracking for quantum circuits via Petz recovery maps"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Sheng-Kai Huang", email = "akai@fawstudio.com"}]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.21",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = ["quantum", "noise", "petz", "recovery", "bayesian", "NISQ"]
+
+[project.urls]
+Homepage = "https://tau-chrono.pages.dev"
+Repository = "https://github.com/akaiHuang/tau-chrono"
+"Bug Tracker" = "https://github.com/akaiHuang/tau-chrono/issues"
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "notebook", "black"]
+demo = ["streamlit>=1.20", "plotly>=5.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tau_chrono*"]

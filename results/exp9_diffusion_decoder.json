@@ -1,0 +1,7 @@
+{
+  "MWPM": 0.0116,
+  "Diff(no prior)": 0.8267,
+  "Diff(+tau)": 0.8267,
+  "Diff(+tau,10K)": 0.8267,
+  "Diff(50 steps)": 0.8267
+}

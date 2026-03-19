@@ -1,0 +1,516 @@
+{
+  "metadata": {
+    "backend": "QX emulator",
+    "is_hardware": false,
+    "shots": 1024,
+    "timestamp": "20260319_181203",
+    "datetime": "2026-03-19T18:12:07.864584"
+  },
+  "exp1_depth_scaling": [
+    {
+      "depth": 2,
+      "total_gates": 10,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "sx",
+        "s"
+      ],
+      "elapsed_s": 12.2
+    },
+    {
+      "depth": 4,
+      "total_gates": 18,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "h",
+        "sx",
+        "sx",
+        "s"
+      ],
+      "elapsed_s": 11.0
+    },
+    {
+      "depth": 6,
+      "total_gates": 24,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "h",
+        "h",
+        "sx",
+        "x",
+        "sx",
+        "sx"
+      ],
+      "elapsed_s": 11.0
+    },
+    {
+      "depth": 8,
+      "total_gates": 38,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "sx",
+        "sx",
+        "s",
+        "h",
+        "s",
+        "s",
+        "s",
+        "sx"
+      ],
+      "elapsed_s": 10.9
+    },
+    {
+      "depth": 10,
+      "total_gates": 38,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "x",
+        "h",
+        "x",
+        "s",
+        "s",
+        "x",
+        "x",
+        "x",
+        "s",
+        "s"
+      ],
+      "elapsed_s": 10.7
+    },
+    {
+      "depth": 15,
+      "total_gates": 59,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "h",
+        "h",
+        "s",
+        "x",
+        "x",
+        "h",
+        "s",
+        "h",
+        "h",
+        "sx",
+        "sx",
+        "sx",
+        "x",
+        "s",
+        "s"
+      ],
+      "elapsed_s": 11.1
+    },
+    {
+      "depth": 20,
+      "total_gates": 86,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "s",
+        "s",
+        "sx",
+        "x",
+        "x",
+        "sx",
+        "x",
+        "sx",
+        "s",
+        "sx",
+        "s",
+        "s",
+        "h",
+        "sx",
+        "h",
+        "sx",
+        "sx",
+        "h",
+        "h",
+        "sx"
+      ],
+      "elapsed_s": 11.1
+    },
+    {
+      "depth": 30,
+      "total_gates": 118,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "x",
+        "s",
+        "h",
+        "s",
+        "x",
+        "x",
+        "x",
+        "h",
+        "x",
+        "h",
+        "x",
+        "s",
+        "s",
+        "sx",
+        "s",
+        "sx",
+        "s",
+        "h",
+        "s",
+        "sx",
+        "sx",
+        "x",
+        "h",
+        "s",
+        "x",
+        "s",
+        "s",
+        "x",
+        "x",
+        "x"
+      ],
+      "elapsed_s": 11.0
+    },
+    {
+      "depth": 40,
+      "total_gates": 156,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "x",
+        "x",
+        "s",
+        "x",
+        "h",
+        "sx",
+        "x",
+        "x",
+        "s",
+        "x",
+        "x",
+        "x",
+        "s",
+        "x",
+        "sx",
+        "s",
+        "sx",
+        "s",
+        "x",
+        "sx",
+        "s",
+        "h",
+        "x",
+        "s",
+        "h",
+        "s",
+        "h",
+        "x",
+        "sx",
+        "h",
+        "s",
+        "x",
+        "h",
+        "s",
+        "s",
+        "s",
+        "h",
+        "h",
+        "h",
+        "sx"
+      ],
+      "elapsed_s": 11.1
+    },
+    {
+      "depth": 50,
+      "total_gates": 208,
+      "counts": {
+        "0": 1024
+      },
+      "shots": 1024,
+      "p_correct": 1.0,
+      "actual_fidelity": 1.0,
+      "forward_gates": [
+        "h",
+        "h",
+        "h",
+        "sx",
+        "h",
+        "s",
+        "h",
+        "s",
+        "s",
+        "s",
+        "sx",
+        "sx",
+        "sx",
+        "h",
+        "s",
+        "sx",
+        "sx",
+        "h",
+        "sx",
+        "h",
+        "x",
+        "sx",
+        "x",
+        "h",
+        "s",
+        "sx",
+        "h",
+        "s",
+        "s",
+        "x",
+        "h",
+        "s",
+        "sx",
+        "sx",
+        "x",
+        "s",
+        "h",
+        "sx",
+        "s",
+        "s",
+        "x",
+        "sx",
+        "sx",
+        "h",
+        "sx",
+        "h",
+        "sx",
+        "x",
+        "sx",
+        "h"
+      ],
+      "elapsed_s": 11.3
+    }
+  ],
+  "exp2_bernstein_vazirani": [
+    {
+      "n_rep": 1,
+      "gate_count": 17,
+      "expected_output": "1101",
+      "counts": {
+        "1011": 1024
+      },
+      "shots": 1024,
+      "p_success": 1.0,
+      "elapsed_s": 11.2
+    },
+    {
+      "n_rep": 2,
+      "gate_count": 20,
+      "expected_output": "0000",
+      "counts": {
+        "0000": 1024
+      },
+      "shots": 1024,
+      "p_success": 1.0,
+      "elapsed_s": 11.1
+    },
+    {
+      "n_rep": 3,
+      "gate_count": 23,
+      "expected_output": "1101",
+      "counts": {
+        "1011": 1024
+      },
+      "shots": 1024,
+      "p_success": 1.0,
+      "elapsed_s": 11.1
+    },
+    {
+      "n_rep": 5,
+      "gate_count": 29,
+      "expected_output": "1101",
+      "counts": {
+        "1011": 1024
+      },
+      "shots": 1024,
+      "p_success": 1.0,
+      "elapsed_s": 11.2
+    },
+    {
+      "n_rep": 8,
+      "gate_count": 38,
+      "expected_output": "0000",
+      "counts": {
+        "0000": 1024
+      },
+      "shots": 1024,
+      "p_success": 1.0,
+      "elapsed_s": 11.3
+    },
+    {
+      "n_rep": 12,
+      "gate_count": 50,
+      "expected_output": "0000",
+      "counts": {
+        "0000": 1024
+      },
+      "shots": 1024,
+      "p_success": 1.0,
+      "elapsed_s": 11.6
+    }
+  ],
+  "exp4_prediction_validation": [
+    {
+      "depth": 2,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.1811984066381831,
+      "tau_bayes": 0.16828978435546715,
+      "f_naive": 0.8188015933618169,
+      "f_bayes": 0.8317102156445328,
+      "error_naive": 0.1811984066381831,
+      "error_bayes": 0.16828978435546715,
+      "bayes_wins": true,
+      "improvement_pct": 7.124026376507755
+    },
+    {
+      "depth": 4,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.3295639507081498,
+      "tau_bayes": 0.27993666567419506,
+      "f_naive": 0.6704360492918502,
+      "f_bayes": 0.7200633343258049,
+      "error_naive": 0.3295639507081498,
+      "error_bayes": 0.27993666567419506,
+      "bayes_wins": true,
+      "improvement_pct": 15.058468903324599
+    },
+    {
+      "depth": 6,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.45104589459263134,
+      "tau_bayes": 0.3540054878306129,
+      "f_naive": 0.5489541054073687,
+      "f_bayes": 0.6459945121693871,
+      "error_naive": 0.45104589459263134,
+      "error_bayes": 0.3540054878306129,
+      "bayes_wins": true,
+      "improvement_pct": 21.51453054453846
+    },
+    {
+      "depth": 8,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.5505155038099357,
+      "tau_bayes": 0.40314425777074947,
+      "f_naive": 0.44948449619006425,
+      "f_bayes": 0.5968557422292505,
+      "error_naive": 0.5505155038099357,
+      "error_bayes": 0.40314425777074947,
+      "bayes_wins": true,
+      "improvement_pct": 26.76968132945914
+    },
+    {
+      "depth": 10,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.6319613783281419,
+      "tau_bayes": 0.43574392171744725,
+      "f_naive": 0.3680386216718581,
+      "f_bayes": 0.5642560782825528,
+      "error_naive": 0.6319613783281419,
+      "error_bayes": 0.43574392171744725,
+      "bayes_wins": true,
+      "improvement_pct": 31.04896332902325
+    },
+    {
+      "depth": 15,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.7767250024057997,
+      "tau_bayes": 0.4769651005065212,
+      "f_naive": 0.22327499759420033,
+      "f_bayes": 0.5230348994934788,
+      "error_naive": 0.7767250024057997,
+      "error_bayes": 0.4769651005065212,
+      "bayes_wins": true,
+      "improvement_pct": 38.592796803349074
+    },
+    {
+      "depth": 20,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.8645475729578789,
+      "tau_bayes": 0.49174231280749203,
+      "f_naive": 0.13545242704212113,
+      "f_bayes": 0.508257687192508,
+      "error_naive": 0.8645475729578789,
+      "error_bayes": 0.49174231280749203,
+      "bayes_wins": true,
+      "improvement_pct": 43.12142811007001
+    },
+    {
+      "depth": 30,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.9501482754493098,
+      "tau_bayes": 0.4989387868106423,
+      "f_naive": 0.0498517245506902,
+      "f_bayes": 0.5010612131893577,
+      "error_naive": 0.9501482754493098,
+      "error_bayes": 0.4989387868106423,
+      "bayes_wins": true,
+      "improvement_pct": 47.488323696140775
+    },
+    {
+      "depth": 40,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.9816526400083989,
+      "tau_bayes": 0.4998636212044564,
+      "f_naive": 0.018347359991601087,
+      "f_bayes": 0.5001363787955436,
+      "error_naive": 0.9816526400083989,
+      "error_bayes": 0.4998636212044564,
+      "bayes_wins": true,
+      "improvement_pct": 49.07937891348414
+    },
+    {
+      "depth": 50,
+      "actual_fidelity": 1.0,
+      "tau_naive": 0.9932474629173738,
+      "tau_bayes": 0.49998247366687654,
+      "f_naive": 0.006752537082626242,
+      "f_bayes": 0.5000175263331235,
+      "error_naive": 0.9932474629173738,
+      "error_bayes": 0.49998247366687654,
+      "bayes_wins": true,
+      "improvement_pct": 49.66184235715797
+    }
+  ]
+}

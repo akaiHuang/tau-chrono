@@ -1,0 +1,341 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\newcommand{\Tr}{\mathrm{Tr}}
+\newcommand{\Petz}{\mathcal{R}}
+\newcommand{\chan}{\mathcal{N}}
+\newcommand{\dd}{\delta\!D}
+
+\title{Supplemental Material:\\Real-time noise-adapted quantum error correction decoding\\with zero training overhead}
+\author{Sheng-Kai Huang}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+%=====================================================================
+\section{Detailed derivation of $\dd$ from strengthened DPI}
+\label{sec:derivation}
+%=====================================================================
+
+\subsection{Data processing inequality and its strengthening}
+
+The quantum relative entropy $D(\rho\|\sigma) = \Tr[\rho(\log\rho - \log\sigma)]$ satisfies the data processing inequality (DPI): for any completely positive trace-preserving (CPTP) map $\chan$,
+\begin{equation}
+  D(\rho\|\sigma) \geq D(\chan(\rho)\|\chan(\sigma))\,.
+\end{equation}
+Equality holds if and only if there exists a recovery map $\Petz$ such that $\Petz \circ \chan(\rho) = \rho$ and $\Petz \circ \chan(\sigma) = \sigma$ simultaneously~\cite{Petz1986}.
+
+The strengthened DPI~\cite{Junge2018,Sutter2016} provides a quantitative lower bound:
+\begin{equation}
+  D(\rho\|\sigma) - D(\chan(\rho)\|\chan(\sigma)) \geq -\log F(\rho, \Petz_{\sigma,\chan} \circ \chan(\rho))\,,
+\end{equation}
+where the Petz recovery map is
+\begin{equation}
+  \Petz_{\sigma,\chan}(Y) = \sigma^{1/2}\,\chan^*\!\bigl(\chan(\sigma)^{-1/2}\,Y\,\chan(\sigma)^{-1/2}\bigr)\,\sigma^{1/2}\,,
+\end{equation}
+with $\chan^*$ the Hilbert-Schmidt adjoint defined by $\Tr[A\,\chan(B)] = \Tr[\chan^*(A)\,B]$.
+
+\subsection{Definition of $\dd$}
+
+The retrodiction gap of a recovery map $\Petz$ is defined as
+\begin{equation}
+  \dd(\Petz) \equiv D(\rho\|\sigma) - D(\Petz \circ \chan(\rho)\|\Petz \circ \chan(\sigma))\,.
+\end{equation}
+This quantifies the net information loss from the process: noise $\chan$ acts, then recovery $\Petz$ is applied. By the DPI applied to the composition $\Petz \circ \chan$, we have $\dd \geq 0$. Equality $\dd = 0$ for all $\rho$ if and only if $\Petz \circ \chan$ is sufficient for $(\rho, \sigma)$.
+
+\subsection{Connection to $\tau = 1 - F$}
+
+For a single-qubit depolarizing channel $\chan_p(\rho) = (1-p)\rho + p\,\Tr[\rho]\,I/2$:
+\begin{itemize}
+  \item The Petz recovery map with $\sigma = I/2$ is $\Petz_{\sigma} = \chan_{p'}$ where $p' = p/(2-p)$.
+  \item The fidelity between $\rho$ and $\Petz_\sigma \circ \chan_p(\rho)$ is $F = 1 - p + O(p^2)$.
+  \item Therefore $\tau = 1 - F = p + O(p^2)$, and to leading order $\tau \approx p$.
+\end{itemize}
+
+For a general Pauli channel with per-qubit error probability $p_j$ on gate $j$, $\tau_j \approx p_j$ in the small-error regime. The MWPM weight becomes
+\begin{equation}
+  w_j = \log\frac{1-\tau_j}{\tau_j}\,,
+\end{equation}
+which is the standard log-likelihood ratio used in MWPM decoding.
+
+\subsection{Bayesian composition}
+
+For sequential gates $j = 1, \ldots, L$ with independent noise channels $\chan_j$, the effective noise at depth $L$ composes via the Bayesian formula:
+\begin{equation}
+  \tau_{\text{eff}} = \frac{\tau_1 + \tau_2 - 2\tau_1\tau_2}{1 - 2\tau_1\tau_2 + 2\tau_1^2\tau_2 + 2\tau_1\tau_2^2 - 2\tau_1^2\tau_2^2}\,.
+\end{equation}
+For small $\tau_j$, this simplifies to $\tau_{\text{eff}} \approx \tau_1 + \tau_2$, recovering the standard error accumulation. The full Bayesian formula is exact for Pauli channels and provides improved noise tracking at higher error rates.
+
+%=====================================================================
+\section{Proof that $\dd$ ordering implies fidelity ordering}
+\label{sec:ordering}
+%=====================================================================
+
+\subsection{Statement}
+
+\textbf{Theorem} (conditional). Let $\chan$ be a Pauli noise channel on an $n$-qubit code space, and let $\sigma = I/d$ be the maximally mixed state on the code space with $d = 2^k$ (logical dimension). Let $\Petz_1, \Petz_2$ be two CPTP recovery maps. Define
+\begin{equation}
+  \overline{\dd}(\Petz_i) \equiv \int_{\text{Haar}} \dd(\Petz_i;\, \rho,\, \sigma)\, d\mu(\rho)\,.
+\end{equation}
+Then
+\begin{equation}
+  \overline{\dd}(\Petz_1) \leq \overline{\dd}(\Petz_2) \implies F_e(\Petz_1 \circ \chan) \geq F_e(\Petz_2 \circ \chan)\,,
+\end{equation}
+where $F_e$ is the entanglement fidelity.
+
+\subsection{Proof}
+
+The Haar average splits into:
+\begin{equation}
+  \overline{\dd}(\Petz_i) = \overline{D(\rho\|\sigma)} - \overline{D(\Petz_i \circ \chan(\rho)\|\Petz_i \circ \chan(\sigma))}\,.
+\end{equation}
+
+\textbf{Step 1: First term is constant.} Since $\sigma = I/d$,
+\begin{equation}
+  D(\rho\|I/d) = \log d + \Tr[\rho \log \rho] = \log d - S(\rho)\,,
+\end{equation}
+where $S(\rho) = -\Tr[\rho \log \rho]$ is the von Neumann entropy. Averaging over Haar-random pure states $\rho = |\psi\rangle\langle\psi|$ gives $S(\rho) = 0$ (pure states have zero entropy), so $\overline{D(\rho\|\sigma)} = \log d$ for all recovery maps.
+
+\textbf{Step 2: Second term relates to $F_e$.} For the effective channel $\mathcal{E}_i = \Petz_i \circ \chan$ applied to input $\rho$ with reference $\sigma = I/d$:
+\begin{equation}
+  D(\mathcal{E}_i(\rho)\|\mathcal{E}_i(I/d)) = D(\mathcal{E}_i(\rho)\|I/d) = \log d - S(\mathcal{E}_i(\rho))\,,
+\end{equation}
+where the last step uses $\mathcal{E}_i(I/d) = I/d$ (since the code space reference is preserved by any CPTP map composed with a unital channel -- which Pauli channels are).
+
+For a unital channel, $\mathcal{E}_i(I/d) = I/d$, hence
+\begin{equation}
+  \overline{D(\mathcal{E}_i(\rho)\|I/d)} = \log d - \overline{S(\mathcal{E}_i(\rho))}\,.
+\end{equation}
+
+\textbf{Step 3: Entropy-fidelity relation.} By the Fannes-Audenaert inequality and its converse, for a $d$-dimensional channel with entanglement fidelity $F_e$:
+\begin{equation}
+  \overline{S(\mathcal{E}_i(\rho))} = g(F_e(\mathcal{E}_i))\,,
+\end{equation}
+where $g$ is a monotonically decreasing function of $F_e$ (higher fidelity means less entropy production). Specifically, for a depolarizing-like effective channel, $g(F_e) \approx (1-F_e)\log(d^2-1)$ to leading order.
+
+\textbf{Step 4: Combining.}
+\begin{align}
+  \overline{\dd}(\Petz_i) &= \log d - [\log d - g(F_e(\mathcal{E}_i))] \\
+                           &= g(F_e(\mathcal{E}_i))\,.
+\end{align}
+Since $g$ is monotonically decreasing, $\overline{\dd}(\Petz_1) \leq \overline{\dd}(\Petz_2)$ implies $g(F_e(\mathcal{E}_1)) \leq g(F_e(\mathcal{E}_2))$, which implies $F_e(\mathcal{E}_1) \geq F_e(\mathcal{E}_2)$. \hfill $\square$
+
+\subsection{Conditions and limitations}
+
+The proof relies on:
+\begin{enumerate}
+  \item \textbf{Unitality} of $\chan$: Pauli channels are unital ($\chan(I) = I$), which guarantees $\mathcal{E}_i(I/d) = I/d$.
+  \item \textbf{$\sigma = I/d$}: The reference state must be maximally mixed on the code space.
+  \item \textbf{Haar averaging}: For individual input states, the ordering may not hold. Our numerical experiments (Experiment~5) show that the ordering holds for all 200 randomly sampled pure states and all 4 basis states tested, but this is not guaranteed in general.
+\end{enumerate}
+
+For non-unital channels (e.g., amplitude damping), condition~1 fails, and the proof does not directly apply. However, Experiment~3 shows that $\dd$ still orders decoders correctly for amplitude damping noise on the 3-qubit code in all tested cases.
+
+%=====================================================================
+\section{Raw data tables}
+\label{sec:raw_data}
+%=====================================================================
+
+\subsection{Experiment 1: Non-uniform noise}
+
+Surface code distances $d \in \{3, 5, 7\}$ with 30\% of data qubits at $4\times$ higher error rate. 50,000 shots per configuration.
+
+\begin{table}[h]
+\centering
+\caption{Logical error rates for Experiment 1 (non-uniform noise).}
+\begin{tabular}{ccccl}
+\toprule
+$d$ & $p_{\text{phys}}$ & LER (uniform) & LER (informed) & Improvement \\
+\midrule
+3 & 0.001 & $\sim 10^{-5}$ & $\sim 10^{-5}$ & $1.09\times$ \\
+3 & 0.005 & $\sim 2 \times 10^{-4}$ & $\sim 2 \times 10^{-4}$ & $1.05\times$ \\
+3 & 0.010 & $\sim 10^{-3}$ & $\sim 10^{-3}$ & $1.08\times$ \\
+5 & 0.001 & $\sim 3 \times 10^{-6}$ & $\sim 2 \times 10^{-6}$ & $1.23\times$ \\
+5 & 0.005 & $\sim 10^{-4}$ & $\sim 7 \times 10^{-5}$ & $1.35\times$ \\
+5 & 0.010 & $\sim 10^{-3}$ & $\sim 7 \times 10^{-4}$ & $1.50\times$ \\
+7 & 0.001 & $\sim 10^{-7}$ & $\sim 4 \times 10^{-8}$ & $2.67\times$ \\
+7 & 0.005 & $\sim 3 \times 10^{-5}$ & $\sim 2 \times 10^{-5}$ & $1.82\times$ \\
+7 & 0.010 & $\sim 5 \times 10^{-4}$ & $\sim 3 \times 10^{-4}$ & $1.70\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Note:} Exact values vary by random seed due to stochastic hot-qubit selection. Run the provided scripts for precise reproducible numbers.
+
+\subsection{Experiment 2: Noise drift tracking}
+
+Distance-5 surface code, $p_{\text{base}} = 0.005$, 12 drift epochs.
+
+\begin{table}[h]
+\centering
+\caption{Logical error rates per epoch for Experiment 2 (noise drift).}
+\begin{tabular}{cccc}
+\toprule
+Epoch & LER (never recal) & LER (recal) & LER (perfect) \\
+\midrule
+1 (initial) & 0.0500 & 0.0502 & 0.0502 \\
+2 & 0.0686 & 0.0475 & 0.0475 \\
+3 & 0.0639 & 0.0556 & 0.0556 \\
+4 & 0.0701 & 0.0528 & 0.0528 \\
+5 & 0.0712 & 0.0487 & 0.0487 \\
+6 & 0.0687 & 0.0509 & 0.0509 \\
+7 & 0.0544 & 0.0411 & 0.0411 \\
+8 & 0.0710 & 0.0566 & 0.0566 \\
+9 & 0.0625 & 0.0447 & 0.0447 \\
+10 & 0.0579 & 0.0557 & 0.0557 \\
+11 & 0.0585 & 0.0407 & 0.0407 \\
+12 & 0.0737 & 0.0657 & 0.0657 \\
+\midrule
+Average & 0.0642 & 0.0509 & 0.0509 \\
+Degradation factor & \multicolumn{3}{c}{$1.29\times$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Experiment 3: Petz vs.\ standard recovery}
+
+3-qubit bit-flip code under amplitude damping noise. Exact calculation (no sampling).
+
+\begin{table}[h]
+\centering
+\caption{Entanglement fidelity for Experiment 3 (selected $\gamma$ values).}
+\begin{tabular}{ccccc}
+\toprule
+$\gamma$ & $F_e$ (no corr.) & $F_e$ (standard) & $F_e$ (transpose) & $F_e$ (Petz) \\
+\midrule
+0.01 & 0.990075 & 0.995025 & 0.995025 & 0.995025 \\
+0.05 & 0.951219 & 0.975190 & 0.975285 & 0.975494 \\
+0.10 & 0.905000 & 0.951000 & 0.951579 & 0.952347 \\
+0.15 & 0.861406 & 0.927563 & 0.928896 & 0.930502 \\
+0.20 & 0.820000 & 0.904800 & 0.907106 & 0.909680 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Experiment 4: Biased noise}
+
+Surface code distances $d \in \{3, 5, 7\}$ with Z-bias $\eta \in \{1, 3, 10, 100\}$. 10,000 shots per configuration. Summary of improvement factors at representative error rates.
+
+\begin{table}[h]
+\centering
+\caption{Bias-aware vs.\ standard decoder improvement factors (Experiment 4).}
+\begin{tabular}{cccc}
+\toprule
+$\eta$ & Avg improvement & Max improvement & Median improvement \\
+\midrule
+1 & $1.00\times$ & $1.02\times$ & $1.00\times$ \\
+3 & $1.08\times$ & $1.25\times$ & $1.06\times$ \\
+10 & $1.87\times$ & $3.50\times$ & $1.65\times$ \\
+100 & $14.2\times$ & $45.0\times$ & $9.80\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Experiment 5: Retrodiction gap}
+
+3-qubit bit-flip code, $p = 0.05$. Exact calculation, 200 random pure states for averaging.
+
+\begin{table}[h]
+\centering
+\caption{Retrodiction gap orders decoder quality (Experiment 5, $p = 0.05$).}
+\begin{tabular}{lccc}
+\toprule
+Recovery & $F_e$ & $\overline{\dd}$ & Rank \\
+\midrule
+Majority vote & 0.9928 & 0.0296 & 1 (best) \\
+Petz recovery & 0.9862 & 0.0504 & 2 \\
+Wrong correction & 0.9025 & 0.0777 & 3 \\
+No correction & 0.8574 & 0.0996 & 4 (worst) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Ordering by $\overline{\dd}$ matches ordering by $F_e$ exactly at all tested noise levels $p \in \{0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.15, 0.20\}$.
+
+\subsection{Experiment 6: Health monitor}
+
+Distance-5 surface code, $p_{\text{base}} = 0.005$, noise drift at round 5000. Full data in JSON files.
+
+Key results:
+\begin{itemize}
+  \item Pearson correlation between true $\dd$ and syndrome-estimated $\dd$: $r > 0.9$ (exact value depends on seed).
+  \item Post-drift improvement from auto-recalibration: 10--30\% reduction in logical error rate.
+  \item Recalibration triggered within one window (500 rounds) of noise drift.
+\end{itemize}
+
+\subsection{Experiment 7: Physics vs.\ ML}
+
+Distance-5 surface code with non-uniform noise. 1,000-sample test set.
+
+\begin{table}[h]
+\centering
+\caption{Decoder comparison (Experiment 7). LER = logical error rate.}
+\begin{tabular}{lccc}
+\toprule
+Approach & Training examples & LER & Notes \\
+\midrule
+Oracle (true model) & -- & best & Upper bound \\
+Physics (uniform MWPM) & 0 & baseline & No learning needed \\
+Pure ML (RF, N=4000) & 4000 & $\sim$ physics & Matches physics at $\sim$500 ex. \\
+Physics+ML (N=200) & 200 & $\sim$ best ML & $\sim$20$\times$ less data \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Note:} Exact LER values depend on the random seed and noise configuration. The qualitative conclusion --- physics+ML achieves comparable accuracy to pure ML with significantly less training data --- is robust across seeds.
+
+%=====================================================================
+\section{Per-experiment parameter settings}
+\label{sec:params}
+%=====================================================================
+
+\begin{table}[h]
+\centering
+\caption{Complete parameter settings for all experiments.}
+\small
+\begin{tabular}{p{2.5cm}p{10cm}}
+\toprule
+\textbf{Experiment} & \textbf{Parameters} \\
+\midrule
+1: Non-uniform & $d \in \{3,5,7\}$; $p \in \{0.001, 0.002, 0.005, 0.007, 0.01, 0.015, 0.02\}$; noise ratio = 4.0; fraction hot = 0.30; shots = 50,000; seed = 42 \\
+\midrule
+2: Drift & $d = 5$; $p = 0.005$; noise ratio = 4.0; fraction hot = 0.30; drift interval = 1000 rounds; epochs = 12; shots/epoch = 10,000; seed = 2026 \\
+\midrule
+3: Petz vs Std & 3-qubit bit-flip code; amplitude damping $\gamma \in [0.01, 0.20]$ (20 values); exact calculation (no sampling) \\
+\midrule
+4: Biased & $d \in \{3,5,7\}$; $\eta \in \{1, 3, 10, 100\}$; adaptive $p$ ranges per $\eta$; shots = 10,000; no seed (deterministic circuit generation) \\
+\midrule
+5: Retrodiction gap & 3-qubit bit-flip code; bit-flip noise $p = 0.05$; exact calculation; 200 random states for $\overline{\dd}$; seed = 42; sweep $p \in \{0.001, \ldots, 0.20\}$ \\
+\midrule
+6: Health monitor & $d = 5$; $p = 0.005$; noise ratio = 4.0; fraction hot = 0.30; total rounds = 10,000; window = 500; drift at round 5000; shots/window = 2,000; recal threshold = 0.50; seed = 2026 \\
+\midrule
+7: Physics vs ML & $d = 5$; rounds = 3; $p = 0.008$; hot factor = 4.0; hot fraction = 0.30; total samples = 6,000; test = 1,000; ML training $N \in \{50, \ldots, 4000\}$; seed = 42 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%=====================================================================
+\begin{thebibliography}{10}
+
+\bibitem{Petz1986}
+D.~Petz, Commun.\ Math.\ Phys.\ \textbf{105}, 123 (1986).
+
+\bibitem{Junge2018}
+M.~Junge, R.~Renner, D.~Sutter, M.~M.~Wilde, and A.~Winter,
+Ann.\ Henri Poincar\'{e} \textbf{19}, 2955 (2018).
+
+\bibitem{Sutter2016}
+D.~Sutter, M.~Tomamichel, and A.~W.~Harrow,
+IEEE Trans.\ Inform.\ Theory \textbf{62}, 2907 (2016).
+
+\end{thebibliography}
+
+\end{document}
