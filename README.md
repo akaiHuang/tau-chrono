@@ -15,16 +15,66 @@
 pip install tau-chrono
 ```
 
+### Option 1: With Qiskit circuit (recommended)
+
+```python
+from qiskit import QuantumCircuit
+from tau_chrono.api import predict_circuit
+
+# Your quantum circuit
+qc = QuantumCircuit(3)
+qc.h(0)
+qc.cx(0, 1)
+qc.cx(1, 2)
+# ... add more gates ...
+
+# One line: should I run this circuit?
+result = predict_circuit(qc)
+print(result)
+# PredictionResult(
+#   f_tauchrono = 0.8308  (GO)
+#   f_naive     = 0.8165  (GO)
+#   should_run  = True
+# )
+
+if result.should_run:
+    backend.run(qc)  # run with confidence
+else:
+    print("Circuit too noisy, skip")
+```
+
+### Option 2: Just gate names (no Qiskit needed)
+
+```python
+from tau_chrono.api import predict_gates
+
+result = predict_gates(["h", "cx", "cx", "h", "cx", "cx", "h"])
+print(result.should_run)      # True
+print(result.f_tauchrono)     # 0.82
+print(result.f_naive)         # 0.80
+```
+
+### Option 3: Custom gate error rates
+
+```python
+from tau_chrono.api import predict_gates
+
+# Use your own hardware calibration data
+my_errors = {"cx": 0.008, "h": 0.002, "sx": 0.001}
+result = predict_gates(["h", "cx", "cx", "h"] * 20, gate_errors=my_errors)
+print(result)
+```
+
+### Option 4: Low-level API
+
 ```python
 import numpy as np
 from tau_chrono import depolarizing, tau_chrono_compose
 
-# Build a 20-gate circuit with 5% depolarizing noise per gate
 gates = [depolarizing(0.05) for _ in range(20)]
-rho = np.array([[1, 0], [0, 0]], dtype=complex)    # |0>
-sigma = np.eye(2, dtype=complex) / 2                # maximally mixed
+rho = np.array([[1, 0], [0, 0]], dtype=complex)
+sigma = np.eye(2, dtype=complex) / 2
 
-# Compare naive vs tau-chrono noise prediction
 result = tau_chrono_compose(gates, sigma_0=sigma, rho=rho)
 print(f"Naive:      tau = {result.tau_multiplicative_total:.3f}")
 print(f"tau-chrono: tau = {result.tau_bayesian_total:.3f}")

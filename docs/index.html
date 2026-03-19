@@ -572,20 +572,32 @@ footer a:hover { color: var(--text); }
 <section class="sec" id="usage">
   <div class="sec-inner fade">
     <h2 class="sec-title">How to Use</h2>
-    <p class="sec-sub">Three lines of code. No training data needed.</p>
+    <p class="sec-sub">Add one line before you run your circuit. Works with Qiskit.</p>
     <div class="code-block">
       <span class="cm"># Install</span><br>
       <span class="fn">pip install</span> tau-chrono<br>
       <br>
-      <span class="cm"># Use</span><br>
-      <span class="kw">import</span> numpy <span class="kw">as</span> np<br>
-      <span class="kw">from</span> tau_chrono <span class="kw">import</span> depolarizing, tau_chrono_compose<br>
+      <span class="cm"># With Qiskit circuit</span><br>
+      <span class="kw">from</span> qiskit <span class="kw">import</span> QuantumCircuit<br>
+      <span class="kw">from</span> tau_chrono.api <span class="kw">import</span> predict_circuit<br>
       <br>
-      gates = [<span class="fn">depolarizing</span>(<span class="str">0.05</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="str">20</span>)]<br>
-      rho = np.<span class="fn">array</span>([[<span class="str">1,0</span>],[<span class="str">0,0</span>]], dtype=complex)<br>
-      sigma = np.<span class="fn">eye</span>(<span class="str">2</span>, dtype=complex) / <span class="str">2</span><br>
-      result = <span class="fn">tau_chrono_compose</span>(gates, sigma_0=sigma, rho=rho)<br>
-      <span class="fn">print</span>(result.improvement_percent) <span class="cm"># 31.0%</span>
+      qc = <span class="fn">QuantumCircuit</span>(<span class="str">3</span>)<br>
+      qc.<span class="fn">h</span>(<span class="str">0</span>)<br>
+      qc.<span class="fn">cx</span>(<span class="str">0</span>, <span class="str">1</span>)<br>
+      qc.<span class="fn">cx</span>(<span class="str">1</span>, <span class="str">2</span>)<br>
+      <br>
+      result = <span class="fn">predict_circuit</span>(qc)<br>
+      <span class="fn">print</span>(result.should_run) <span class="cm"># True</span><br>
+      <span class="fn">print</span>(result.f_tauchrono) <span class="cm"># 0.83</span><br>
+      <span class="fn">print</span>(result.f_naive) <span class="cm"># 0.82</span>
+    </div>
+    <p style="margin-top:20px; font-size:15px; color:var(--text-2);">Or without Qiskit:</p>
+    <div class="code-block" style="margin-top:12px;">
+      <span class="kw">from</span> tau_chrono.api <span class="kw">import</span> predict_gates<br>
+      <br>
+      result = <span class="fn">predict_gates</span>([<span class="str">"h"</span>, <span class="str">"cx"</span>, <span class="str">"cx"</span>, <span class="str">"h"</span>] * <span class="str">20</span>)<br>
+      <span class="fn">print</span>(result.should_run) <span class="cm"># True or False</span><br>
+      <span class="fn">print</span>(result.savings_pct) <span class="cm"># 67.0%</span>
     </div>
   </div>
 </section>
