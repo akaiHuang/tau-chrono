@@ -14,6 +14,11 @@ Usage:
     # Option 2: Just a list of gate names
     result = predict_gates(["h", "cx", "cx", "h", "cx", "cx", "h"])
     print(result.should_run)       # True
+
+    # Option 3: QEC intelligence
+    from tau_chrono.api import should_enable_qec, qec_decoder_weights
+    result = should_enable_qec({"cx": 0.05, "h": 0.02})
+    print(result.enable)           # False
 """
 
 from __future__ import annotations
@@ -162,3 +167,16 @@ def predict_circuit(
         gate_names.append(name)
 
     return predict_gates(gate_names, gate_errors=gate_errors, threshold=threshold)
+
+
+# ---------------------------------------------------------------------------
+# QEC Intelligence (re-exported from tau_chrono.qec)
+# ---------------------------------------------------------------------------
+
+from tau_chrono.qec import (  # noqa: E402
+    should_enable_qec,
+    qec_decoder_weights,
+    qec_health_monitor,
+    QECRecommendation,
+    QECHealthAlert,
+)

@@ -124,6 +124,55 @@ Real measured P_success values: 0.68 at n_rep=1, decreasing to 0.08 at n_rep=12.
 
 3-qubit entangling mirror circuit on T-9. Naive says STOP at 20 gates; τ-chrono correctly identifies that 50-gate circuits still work (F=0.67). Depth extension: 2.5x. Two circuits saved that naive would have rejected.
 
+## QEC Intelligence
+
+tau-chrono can predict whether quantum error correction will help or hurt on your hardware, using the same calibration data you already have. Zero additional circuits needed.
+
+```python
+from tau_chrono.api import should_enable_qec
+
+# Check if QEC will help on your hardware
+result = should_enable_qec({"cx": 0.05, "h": 0.02})
+print(result)
+# QECRecommendation(
+#   enable = False
+#   predicted_ler_with_qec    = 0.130000
+#   predicted_ler_without_qec = 0.050000
+#   threshold_error_rate      = 0.0300
+#   reason = "Physical error rate 5.0% exceeds threshold 3.0%.
+#             QEC will likely INCREASE logical error rate."
+# )
+```
+
+**Validated against real T-9 data:** At 4-5% CNOT error, QEC made things 7.2x worse on real hardware. `should_enable_qec` correctly predicts this -- it returns `enable=False` for T-9 error rates.
+
+### Decoder Weights
+
+Generate per-qubit MWPM decoder weights directly from tau characterization:
+
+```python
+from tau_chrono.api import qec_decoder_weights
+
+# Per-qubit calibration -> decoder weights for PyMatching
+weights = qec_decoder_weights(
+    gate_errors={"cx": 0.01},
+    per_qubit_errors={0: {"cx": 0.005}, 1: {"cx": 0.02}, 2: {"cx": 0.01}},
+)
+# weights[0] > weights[2] > weights[1]  (quieter qubit = higher weight)
+```
+
+### Health Monitoring
+
+Monitor QEC health from syndrome statistics without additional circuits:
+
+```python
+from tau_chrono.api import qec_health_monitor
+
+alert = qec_health_monitor(syndrome_history)
+if not alert.healthy:
+    print(alert.message)  # "Noise drift detected: syndrome rate increased by 45%..."
+```
+
 ## Why It Works
 
 Independent gate noise models assume each gate fails independently. In reality, noise saturates: a qubit that's already noisy can't get much noisier. The Petz recovery map (Petz, 1986) tracks this saturation through the circuit by propagating a Bayesian reference state alongside the signal state. τ-chrono uses this retrodiction structure to give more accurate fidelity predictions.

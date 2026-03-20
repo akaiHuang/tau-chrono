@@ -1,0 +1,113 @@
+{
+  "experiment": "QEC Willow Validation",
+  "description": "Validates tau-chrono should_enable_qec() against Monte Carlo noise simulation with two models: (A) bit-flip only, (B) full depolarizing + ancilla back-action. Uses Google Willow (Nature 2024) and QuTech T-9 noise parameters. cirq density matrix cross-validation at d=3.",
+  "parameters": {
+    "distances": [
+      3,
+      5,
+      7
+    ],
+    "num_rounds": 3,
+    "num_shots": 10000
+  },
+  "noise_profiles": {
+    "Willow": {
+      "p1q": 0.0008,
+      "p2q": 0.003,
+      "p_meas": 0.005,
+      "T1_us": 30.0,
+      "T2_us": 15.0
+    },
+    "T-9": {
+      "p1q": 0.021,
+      "p2q": 0.04,
+      "p_meas": 0.001,
+      "T1_us": null,
+      "T2_us": null
+    }
+  },
+  "results": {
+    "T-9": {
+      "ler_bare": 0.0429,
+      "3": {
+        "tau_chrono_enable": false,
+        "tau_chrono_ler_no_qec": 0.04,
+        "tau_chrono_ler_with_qec": 0.0464,
+        "model_a_ler_encoded": 0.0335,
+        "model_a_qec_helps": true,
+        "model_b_ler_encoded": 0.0752,
+        "model_b_qec_helps": false,
+        "agreement_model_a": false,
+        "agreement_model_b": true
+      },
+      "5": {
+        "tau_chrono_enable": false,
+        "tau_chrono_ler_no_qec": 0.04,
+        "tau_chrono_ler_with_qec": 0.05280000000000001,
+        "model_a_ler_encoded": 0.0162,
+        "model_a_qec_helps": true,
+        "model_b_ler_encoded": 0.0528,
+        "model_b_qec_helps": false,
+        "agreement_model_a": false,
+        "agreement_model_b": true
+      },
+      "7": {
+        "tau_chrono_enable": false,
+        "tau_chrono_ler_no_qec": 0.04,
+        "tau_chrono_ler_with_qec": 0.0592,
+        "model_a_ler_encoded": 0.0083,
+        "model_a_qec_helps": true,
+        "model_b_ler_encoded": 0.0363,
+        "model_b_qec_helps": true,
+        "agreement_model_a": false,
+        "agreement_model_b": false
+      }
+    },
+    "Willow": {
+      "ler_bare": 0.0075,
+      "3": {
+        "tau_chrono_enable": true,
+        "tau_chrono_ler_no_qec": 0.003,
+        "tau_chrono_ler_with_qec": 0.002731909928757647,
+        "model_a_ler_encoded": 0.0006,
+        "model_a_qec_helps": true,
+        "model_b_ler_encoded": 0.0006,
+        "model_b_qec_helps": true,
+        "agreement_model_a": true,
+        "agreement_model_b": true
+      },
+      "5": {
+        "tau_chrono_enable": true,
+        "tau_chrono_ler_no_qec": 0.003,
+        "tau_chrono_ler_with_qec": 0.0008244018115537039,
+        "model_a_ler_encoded": 0.0,
+        "model_a_qec_helps": true,
+        "model_b_ler_encoded": 0.0001,
+        "model_b_qec_helps": true,
+        "agreement_model_a": true,
+        "agreement_model_b": true
+      },
+      "7": {
+        "tau_chrono_enable": true,
+        "tau_chrono_ler_no_qec": 0.003,
+        "tau_chrono_ler_with_qec": 0.0002487777286281538,
+        "model_a_ler_encoded": 0.0,
+        "model_a_qec_helps": true,
+        "model_b_ler_encoded": 0.0,
+        "model_b_qec_helps": true,
+        "agreement_model_a": true,
+        "agreement_model_b": true
+      }
+    }
+  },
+  "summary": {
+    "model_b_matches": 5,
+    "model_a_matches": 3,
+    "total_cases": 6,
+    "t9_d3_correct": true,
+    "t9_matches_model_b": 2,
+    "willow_correct_model_b": true,
+    "all_agree_model_b": false,
+    "critical_pass": true
+  }
+}
