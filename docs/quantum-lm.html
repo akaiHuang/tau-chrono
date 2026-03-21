@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Language Model | tau-chrono</title>
+<meta name="description" content="First diffusion language model inference on real quantum hardware. Interactive demo with T-9 results.">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #000;
+  --bg-card: #111;
+  --bg-card-hover: #161616;
+  --text: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #6e6e73;
+  --blue: #2997ff;
+  --purple: #bf5af2;
+  --green: #30d158;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --yellow: #ffd60a;
+  --grad: linear-gradient(90deg, #2997ff, #bf5af2, #ff375f);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+a { text-decoration: none; color: var(--blue); }
+a:hover { color: #0a84ff; }
+
+/* Nav */
+nav {
+  position: fixed; top: 0; width: 100%; z-index: 100;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.nav-in {
+  max-width: 980px; margin: 0 auto; padding: 0 24px;
+  height: 48px; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-in .logo { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.nav-in .logo span { color: #fff; }
+.nav-links { display: flex; gap: 20px; align-items: center; }
+.nav-links a { font-size: 14px; color: var(--text-2); font-weight: 500; }
+.nav-links a:hover { color: var(--text); }
+.btn-gh {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: 20px;
+  background: rgba(255,255,255,.1); color: var(--text);
+  font-size: 13px; font-weight: 500;
+  transition: background .2s;
+}
+.btn-gh:hover { background: rgba(255,255,255,.18); color: var(--text); }
+.btn-gh svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* Hero */
+.hero {
+  min-height: 80vh; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 120px 24px 80px;
+  position: relative; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 50%, rgba(41,151,255,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 30% 70%, rgba(191,90,242,0.06) 0%, transparent 50%);
+}
+.hero h1 {
+  font-size: clamp(42px, 8vw, 80px);
+  font-weight: 700; letter-spacing: -2px;
+  color: #fff;
+  margin-bottom: 16px;
+}
+.hero h1 .accent {
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero .sub {
+  font-size: clamp(16px, 2.5vw, 22px);
+  color: var(--text-2); max-width: 640px; margin: 0 auto 24px;
+  font-weight: 400; line-height: 1.5;
+}
+.hero .badge {
+  display: inline-block;
+  padding: 6px 18px; border-radius: 20px;
+  background: rgba(48,209,88,0.15); color: var(--green);
+  font-size: 14px; font-weight: 600;
+  margin-bottom: 28px;
+  border: 1px solid rgba(48,209,88,0.3);
+}
+
+/* Sections */
+.sec { padding: 100px 24px; }
+.sec-inner { max-width: 980px; margin: 0 auto; }
+.sec-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700; letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+.sec-sub {
+  font-size: 17px; color: var(--text-2);
+  max-width: 700px; line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+/* Steps */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 32px;
+  transition: transform .2s, border-color .2s;
+}
+.step-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+}
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: 16px; font-weight: 700;
+  margin-bottom: 16px;
+}
+.step-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+.step-card p { font-size: 15px; color: var(--text-2); line-height: 1.6; }
+.step-diagram {
+  margin-top: 16px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--text-2);
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* Demo */
+.demo-box {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 760px;
+}
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.token-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.token-btn:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); }
+.token-btn.active { background: rgba(41,151,255,0.2); border-color: var(--blue); color: var(--blue); }
+.token-btn.mask { background: rgba(191,90,242,0.2); border-color: var(--purple); color: var(--purple); }
+.sentence-display {
+  background: #0a0a0a;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 20px 24px;
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sentence-display .tok { color: var(--text); }
+.sentence-display .masked {
+  color: var(--purple);
+  background: rgba(191,90,242,0.15);
+  padding: 2px 12px;
+  border-radius: 6px;
+  border: 1px dashed var(--purple);
+}
+.btn-predict {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px; border-radius: 28px;
+  background: var(--blue); color: #fff;
+  font-size: 16px; font-weight: 600;
+  border: none; cursor: pointer;
+  transition: transform .2s, background .2s;
+  font-family: inherit;
+}
+.btn-predict:hover { background: #0a84ff; transform: scale(1.04); }
+.btn-predict:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-clear {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px; border-radius: 28px;
+  background: rgba(255,255,255,.1); color: var(--text);
+  font-size: 16px; font-weight: 500;
+  border: none; cursor: pointer;
+  transition: background .2s;
+  font-family: inherit;
+  margin-left: 12px;
+}
+.btn-clear:hover { background: rgba(255,255,255,.18); }
+
+/* Probability bars */
+.prob-container { margin-top: 24px; }
+.prob-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.prob-label {
+  width: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+}
+.prob-bar-bg {
+  flex: 1;
+  height: 28px;
+  background: rgba(255,255,255,.04);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.prob-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+  width: 0;
+  position: relative;
+}
+.prob-bar.winner { box-shadow: 0 0 12px rgba(48,209,88,0.4); }
+.prob-value {
+  width: 60px;
+  font-size: 13px;
+  color: var(--text-2);
+  flex-shrink: 0;
+  font-family: 'SF Mono', monospace;
+}
+.prediction-result {
+  margin-top: 20px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  display: none;
+}
+.prediction-result.show { display: block; }
+.prediction-result.correct {
+  background: rgba(48,209,88,0.1);
+  border: 1px solid rgba(48,209,88,0.3);
+  color: var(--green);
+}
+.prediction-result.incorrect {
+  background: rgba(255,69,58,0.1);
+  border: 1px solid rgba(255,69,58,0.3);
+  color: var(--red);
+}
+
+/* Results cards */
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  transition: transform .2s, border-color .2s;
+}
+.result-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+}
+.result-num {
+  font-size: 42px; font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+.result-num.blue { color: var(--blue); }
+.result-num.green { color: var(--green); }
+.result-num.purple { color: var(--purple); }
+.result-num.orange { color: var(--orange); }
+.result-label {
+  font-size: 14px; color: var(--text-2); line-height: 1.4;
+}
+
+/* Table */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+}
+.results-table th {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.results-table td {
+  font-size: 15px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  color: var(--text-2);
+}
+.results-table tr:hover td {
+  background: rgba(255,255,255,.02);
+}
+.correct-yes { color: var(--green) !important; font-weight: 600; }
+.correct-no { color: var(--red) !important; font-weight: 600; }
+
+/* Chart */
+.chart-wrap {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 32px;
+}
+.chart-wrap canvas { max-height: 400px; }
+
+/* Limitations */
+.limit-list {
+  list-style: none;
+  max-width: 700px;
+}
+.limit-list li {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: 16px;
+  color: var(--text-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.5;
+}
+.limit-list li:last-child { border-bottom: none; }
+.limit-dot {
+  width: 6px; height: 6px;
+  background: var(--orange);
+  border-radius: 50%;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+/* Links grid */
+.links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.link-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 12px;
+  padding: 24px;
+  transition: transform .2s, border-color .2s;
+  display: block;
+}
+.link-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.12);
+  color: var(--text);
+}
+.link-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.link-card p { font-size: 13px; color: var(--text-3); }
+
+/* Footer */
+footer {
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding: 48px 24px;
+  text-align: center;
+}
+footer p {
+  font-size: 13px; color: var(--text-3); line-height: 1.8;
+}
+footer a { color: var(--text-2); }
+footer a:hover { color: var(--text); }
+
+/* Fade-in */
+.fade {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.fade.vis {
+  opacity: 1; transform: translateY(0);
+}
+
+/* Note box */
+.note-box {
+  background: rgba(41,151,255,0.08);
+  border: 1px solid rgba(41,151,255,0.2);
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 14px;
+  color: var(--text-2);
+  margin-top: 16px;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .sec { padding: 64px 20px; }
+  .steps { grid-template-columns: 1fr; }
+  .result-grid { grid-template-columns: 1fr 1fr; }
+  .result-num { font-size: 32px; }
+  .result-card { padding: 24px 16px; }
+  .demo-box { padding: 24px 16px; }
+  .sentence-display { font-size: 16px; padding: 16px; }
+  .chart-wrap { padding: 20px 16px; }
+  .links-grid { grid-template-columns: 1fr; }
+  .results-table { font-size: 13px; }
+  .results-table td, .results-table th { padding: 8px 10px; }
+  .nav-links { gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-in">
+    <a href="index.html" class="logo"><span>tau-chrono</span></a>
+    <div class="nav-links">
+      <a href="index.html">Main</a>
+      <a href="#demo">Demo</a>
+      <a href="#results">Results</a>
+      <a href="https://github.com/akaiHuang/tau-chrono" target="_blank" class="btn-gh">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div>
+    <div class="badge">Validated on T-9 hardware</div>
+    <h1>Quantum <span class="accent">Language Model</span></h1>
+    <p class="sub">First diffusion language model inference on real quantum hardware. 3 qubits, 4 CNOTs, 2648 parameters.</p>
+    <a href="#demo" class="btn-predict" style="text-decoration:none;">Try the interactive demo</a>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="sec" id="how" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">How It Works</h2>
+    <p class="sec-sub">A tiny MLP learns language patterns, gets converted to a quantum circuit, and runs on real hardware.</p>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num" style="background:rgba(41,151,255,0.15);color:var(--blue);">1</div>
+        <h3>Classical Training</h3>
+        <p>A 2-layer MLP (61 &rarr; 32 &rarr; 16 &rarr; 8) learns masked token prediction on a tiny 8-word vocabulary. Trained with Adam optimizer for 5000 steps.</p>
+        <div class="step-diagram">Input: "the ___ sat on the mat"
+       &#x2193;
+  [One-hot encode all tokens]
+  [Mark masked position]
+       &#x2193;
+  MLP: 61 &rarr; 32 &rarr; 16 &rarr; 8
+       &#x2193;
+  Output: P(cat)=0.72, P(dog)=0.18, ...</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num" style="background:rgba(191,90,242,0.15);color:var(--purple);">2</div>
+        <h3>Quantum Conversion</h3>
+        <p>The MLP's output probability distribution is encoded into rotation angles on 3 qubits. Each prediction becomes a quantum circuit with ~4 CNOTs.</p>
+        <div class="step-diagram">q0: |0&#x27E9;&#x2500;&#x2500;[Ry]&#x2500;&#x2500;&#x25CF;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x256E;&#x2500;&#x2500; M
+                &#x2502;                &#x2502;
+q1: |0&#x27E9;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;[Ry]&#x2500;&#x2500;&#x25CF;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500; M
+                       &#x2502;
+q2: |0&#x27E9;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2534;&#x2500;&#x2500;[Ry]&#x2500;&#x2500; M</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num" style="background:rgba(48,209,88,0.15);color:var(--green);">3</div>
+        <h3>Run on T-9</h3>
+        <p>Circuits run on the QuTech Tuna-9 superconducting processor. 4096 shots per circuit. Measurement outcomes decoded back to token predictions.</p>
+        <div class="step-diagram">QuTech Tuna-9 (T-9)
+&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;&#x2500;
+  9 transmon qubits
+  e_1q ~ 0.1%, e_2q ~ 1%
+  4096 shots per circuit
+
+  Measured: |101&#x27E9; = token 5 = "mat"</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Interactive Demo -->
+<section class="sec" id="demo">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Interactive Demo</h2>
+    <p class="sec-sub">Build a sentence, mask one word, and see the model's prediction. This runs the actual trained MLP weights in your browser.</p>
+    <div class="demo-box">
+      <p style="font-size:14px; color:var(--text-3); margin-bottom:16px;">VOCABULARY (tap to add to sentence)</p>
+      <div class="demo-row" id="vocab-buttons"></div>
+      <div style="margin-bottom:16px;">
+        <button class="token-btn mask" onclick="addMask()" id="mask-btn">___ (mask)</button>
+      </div>
+      <p style="font-size:14px; color:var(--text-3); margin-bottom:8px;">YOUR SENTENCE</p>
+      <div class="sentence-display" id="sentence-display">
+        <span style="color:var(--text-3); font-style:italic;">Tap tokens above to build a sentence...</span>
+      </div>
+      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+        <button class="btn-predict" id="predict-btn" onclick="predict()" disabled>Predict masked token</button>
+        <button class="btn-clear" onclick="clearSentence()">Clear</button>
+        <button class="btn-clear" onclick="loadExample()" style="font-size:14px; padding:10px 20px;">Load example</button>
+      </div>
+      <div class="note-box">
+        Runs the classical MLP (2648 params) entirely in your browser via JavaScript. No server needed. Real T-9 hardware results shown below.
+      </div>
+      <div class="prob-container" id="prob-container" style="display:none;">
+        <p style="font-size:14px; color:var(--text-3); margin-bottom:16px; margin-top:24px;">PREDICTED PROBABILITY DISTRIBUTION</p>
+        <div id="prob-bars"></div>
+        <div class="prediction-result" id="prediction-result"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- T-9 Results -->
+<section class="sec" id="results" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">T-9 Hardware Results</h2>
+    <p class="sec-sub">8 test cases run on QuTech Tuna-9 superconducting quantum computer. 4096 shots each.</p>
+    <div class="result-grid">
+      <div class="result-card">
+        <div class="result-num orange">0%</div>
+        <div class="result-label">Random baseline<br>(1/8 chance)</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num purple">50%</div>
+        <div class="result-label">Quantum (T-9)<br>4/8 correct</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num blue">62.5%</div>
+        <div class="result-label">Classical MLP<br>5/8 correct</div>
+      </div>
+      <div class="result-card">
+        <div class="result-num green">p = 0.011</div>
+        <div class="result-label">Statistical significance<br>quantum &#8800; random</div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg-card); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:32px; overflow-x:auto;">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Test Case</th>
+            <th>Expected</th>
+            <th>Classical</th>
+            <th>Quantum (T-9)</th>
+          </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>the cat ___</td>
+          <td>sat</td>
+          <td class="correct-no">ran</td>
+          <td class="correct-no">ran</td>
+        </tr>
+        <tr>
+          <td>the dog ___</td>
+          <td>ran</td>
+          <td class="correct-yes">ran</td>
+          <td class="correct-no">cat</td>
+        </tr>
+        <tr>
+          <td>___ cat sat</td>
+          <td>the</td>
+          <td class="correct-yes">the</td>
+          <td class="correct-yes">the</td>
+        </tr>
+        <tr>
+          <td>the ___ sat on a mat</td>
+          <td>cat</td>
+          <td class="correct-yes">cat</td>
+          <td class="correct-yes">cat</td>
+        </tr>
+        <tr>
+          <td>cat ___</td>
+          <td>ran</td>
+          <td class="correct-yes">ran</td>
+          <td class="correct-no">sat</td>
+        </tr>
+        <tr>
+          <td>dog ___</td>
+          <td>sat</td>
+          <td class="correct-no">ran</td>
+          <td class="correct-yes">sat</td>
+        </tr>
+        <tr>
+          <td>___ mat</td>
+          <td>the</td>
+          <td class="correct-no">cat</td>
+          <td class="correct-no">cat</td>
+        </tr>
+        <tr>
+          <td>the cat sat on ___</td>
+          <td>mat</td>
+          <td class="correct-yes">mat</td>
+          <td class="correct-yes">mat</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-wrap">
+      <canvas id="comparisonChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- Limitations -->
+<section class="sec" id="limitations">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Honest Limitations</h2>
+    <p class="sec-sub">This is a proof-of-concept. Here is what it cannot do.</p>
+    <ul class="limit-list">
+      <li><span class="limit-dot"></span>Toy vocabulary of only 8 tokens. Real language models have 50,000+ tokens.</li>
+      <li><span class="limit-dot"></span>The quantum circuit encodes the classical model's output distribution, not the weights themselves. It is a quantum sampler, not a quantum learner.</li>
+      <li><span class="limit-dot"></span>3 qubits cannot represent a vocabulary larger than 8 tokens. Scaling to useful sizes requires fault-tolerant hardware.</li>
+      <li><span class="limit-dot"></span>T-9 accuracy (50%) is below the classical model (62.5%) due to hardware noise. The gap will close as hardware improves.</li>
+      <li><span class="limit-dot"></span>No quantum advantage is claimed. This demonstrates feasibility, not superiority.</li>
+      <li><span class="limit-dot"></span>The training is entirely classical. Only inference runs on quantum hardware.</li>
+      <li><span class="limit-dot"></span>Circuit optimization is heuristic (multi-restart numerical optimization). Better decompositions likely exist.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Links -->
+<section class="sec" id="links" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">Resources</h2>
+    <div class="links-grid">
+      <a href="https://github.com/akaiHuang/tau-chrono" target="_blank" class="link-card">
+        <h4>GitHub Repository</h4>
+        <p>Source code, experiments, and data</p>
+      </a>
+      <a href="https://github.com/akaiHuang/tau-chrono/tree/master/paper" target="_blank" class="link-card">
+        <h4>Paper</h4>
+        <p>Technical details and full results</p>
+      </a>
+      <a href="https://pypi.org/project/tau-chrono/" target="_blank" class="link-card">
+        <h4>PyPI</h4>
+        <p>pip install tau-chrono</p>
+      </a>
+      <a href="index.html" class="link-card">
+        <h4>tau-chrono Main Site</h4>
+        <p>Noise tracking for quantum circuits</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p style="margin-bottom:8px;">
+    <a href="https://github.com/akaiHuang/tau-chrono" target="_blank">GitHub</a> &middot;
+    <a href="index.html">Main Site</a>
+  </p>
+  <p>Author: Sheng-Kai Huang</p>
+  <p style="margin-top:12px;">
+    Quantum Diffusion Language Model &mdash; a tau-chrono experiment
+  </p>
+</footer>
+
+<!-- Model Weights (2648 parameters) -->
+<script>
+const W1=[[0.27549999952316284,-0.7664999961853027,0.019099999219179153,0.39419999718666077,-0.9010000228881836,-0.510699987411499,-0.4221999943256378,-0.2045000046491623,-0.299699991941452,0.336899995803833,-0.16009999811649323,1.0211000442504883,0.5142999887466431,-0.02329999953508377,-0.08470000326633453,-0.6589999794960022,-0.3249000012874603,-0.942799985408783,-0.03840000182390213,0.15209999680519104,0.1606999933719635,-0.045499999076128006,-0.03200000151991844,-0.7466999888420105,-0.11900000274181366,-0.302700012922287,0.07169999927282333,-0.13040000200271606,0.0071000000461936,-0.056699998676776886,0.6717000007629395,-0.07029999792575836],[-0.9864000082015991,0.24469999969005585,-0.2531000077724457,0.30000001192092896,0.2517000138759613,-1.3177000284194946,-1.3899999856948853,-0.011099999770522118,-0.2167000025510788,-0.5963000059127808,0.9447000026702881,0.3862999975681305,-0.5066999793052673,-0.1907999962568283,0.0333000011742115,0.2632000148296356,-0.04600000008940697,0.20720000565052032,-0.6868000030517578,0.251800000667572,-0.12439999729394913,-0.48260000348091125,0.39410001039505005,0.07129999995231628,0.044199999421834946,0.2533999979496002,0.2847999930381775,-0.3133000135421753,-0.2468000054359436,0.17649999260902405,-0.15919999778270721,-0.7354999780654907],[0.10429999977350235,0.11630000174045563,-0.051100000739097595,-0.06780000030994415,0.1257999986410141,-0.02810000069439411,-0.18709999322891235,-0.16619999706745148,-0.1348000019788742,0.07289999723434448,0.020899999886751175,0.10130000114440918,-0.06270000338554382,0.02319999970495701,0.0917000025510788,-0.04540000110864639,0.06700000166893005,-0.09709999710321426,-0.053199999034404755,-0.0560000017285347,-0.1754000037908554,0.0714000016450882,-0.06880000233650208,0.0017999999690800905,0.07050000131130219,0.06549999862909317,0.09759999811649323,-0.014399999752640724,-0.06210000067949295,-0.011699999682605267,-0.24740000069141388,-0.21220000088214874],[-0.1940000057220459,-0.1462000012397766,0.05860000103712082,-0.13279999792575836,-0.05550000071525574,0.19050000607967377,-0.05220000073313713,0.10819999873638153,-0.13689999282360077,-0.03009999915957451,-0.13930000364780426,-0.04969999939203262,0.12319999933242798,-0.2533000111579895,0.06369999796152115,0.0348999984562397,-0.08709999918937683,-0.21209999918937683,0.010599999688565731,-0.07760000228881836,0.0340999998152256,0.0031999999191612005,0.23489999771118164,-0.035100001841783524,-0.1500999927520752,0.02630000002682209,0.03229999914765358,0.19930000603199005,0.12250000238418579,0.052299998700618744,0.21459999680519104,-0.17430000007152557],[0.8676999807357788,0.05460000038146973,0.018699999898672104,-2.203900098800659,-0.5723999738693237,0.019600000232458115,-0.638700008392334,-0.2459000051021576,0.42080000042915344,0.26460000872612,0.15760000050067902,-1.103700041770935,-0.10320000350475311,-0.3479999899864197,-0.040699999779462814,0.7702999711036682,-0.37059998512268066,0.2502000033855438,0.004100000020116568,-0.5385000109672546,0.4896000027656555,-0.25949999690055847,0.3294999897480011,-0.13910000026226044,-0.6265000104904175,-0.453000009059906,0.5041000247001648,0.2953999936580658,0.019099999219179153,0.44179999828338623,0.09210000187158585,0.4535999894142151],[-0.14149999618530273,-0.10639999806880951,0.31209999322891235,-0.12049999833106995,0.12300000339746475,-0.1324000060558319,0.13660000264644623,0.05649999901652336,-0.023000000044703484,-0.006000000052154064,-0.09600000083446503,0.06539999693632126,-0.06669999659061432,-0.17970000207424164,-0.1873999983072281,0.025299999862909317,0.23160000145435333,0.023499999195337296,-0.017400000244379044,0.04190000146627426,0.1914999932050705,0.03220000118017197,-0.06030000001192093,0.16220000386238098,0.06289999932050705,0.22519999742507935,0.026900000870227814,-0.17960000038146973,-0.20059999823570251,0.24210000038146973,0.25279998779296875,-0.02630000002682209],[-1.270400047302246,0.7714999914169312,-0.5123999714851379,-0.19460000097751617,-0.13619999587535858,0.4681999981403351,-0.6177999973297119,-0.10080000013113022,-0.12370000034570694,-0.31189998984336853,0.44760000705718994,0.2969000041484833,-0.7078999876976013,-0.9679999947547913,-0.6675999760627747,-0.3743000030517578,-0.05590000003576279,-0.30239999294281006,0.5360000133514404,-1.4586999416351318,-0.0820000022649765,-0.4465000033378601,-0.1436000019311905,0.45750001072883606,-0.07670000195503235,0.2558000087738037,-0.1551000028848648,-0.6510000228881836,-0.03280000016093254,-1.1167999505996704,-0.810699999332428,-0.7081000208854675],[0.013299999758601189,0.03350000083446503,0.3691999912261963,0.2752000093460083,-0.1251000016927719,-0.042100001126527786,-0.21459999680519104,-0.08659999817609787,0.046300001442432404,0.17679999768733978,-0.10689999908208847,-0.09589999914169312,-0.3149000108242035,-0.023900000378489494,-0.155799999833107,-0.07760000228881836,-0.12860000133514404,-0.013799999840557575,-0.25780001282691956,-0.2151000052690506,0.31220000982284546,-0.18880000710487366,-0.1607999950647354,0.2694000005722046,0.4259999990463257,-0.17180000245571136,-0.05400000140070915,0.05009999871253967,0.2535000145435333,-0.14470000565052032,-0.035999998450279236,0.11400000005960464],[-0.14059999585151672,-0.23600000143051147,-0.26179999113082886,-0.19349999725818634,0.4496000111103058,-0.15440000593662262,0.49470001459121704,0.011800000444054604,-0.897599995136261,0.04179999977350235,0.13459999859333038,-0.23260000348091125,0.25049999356269836,0.5715000033378601,-0.582099974155426,-0.9542999863624573,0.2547000050544739,0.4090000092983246,-0.07620000094175339,-0.04529999941587448,-0.5755000114440918,-0.06679999828338623,-0.9200000166893005,0.44190001487731934,-0.05130000039935112,-0.25110000371932983,-0.26750001311302185,0.7671999931335449,-0.16279999911785126,-0.5415999889373779,-0.15940000116825104,0.5181999802589417],[-0.11309999972581863,0.2207999974489212,-0.15719999372959137,-0.1931000053882599,0.2224999964237213,-0.5968999862670898,-0.1509000062942505,-0.10719999670982361,-0.24390000104904175,-0.14640000462532043,-0.03530000150203705,0.031599998474121094,0.34150001406669617,-0.35740000009536743,-0.125900000333786,-0.49709999561309814,-0.11869999766349792,-0.211899995803833,-0.3276999890804291,0.021800000220537186,0.05389999970793724,0.023600000888109207,-0.1177000030875206,0.01510000042617321,0.06520000100135803,0.2143000066280365,0.4153999984264374,-0.004800000227987766,-0.043699998408555984,-0.38530001044273376,0.05959999933838844,0.029999999329447746],[0.11469999700784683,-0.02800000086426735,0.17180000245571136,0.11010000109672546,0.2669999897480011,0.10719999670982361,-0.2304999977350235,-0.009800000116229057,-0.17190000414848328,-0.07599999755620956,0.2215999960899353,0.09350000321865082,-0.10249999910593033,-0.14869999885559082,0.004800000227987766,-0.17839999496936798,-0.09839999675750732,0.04580000042915344,0.16940000653266907,0.0892999991774559,-0.335999995470047,0.044599998742341995,0.010599999688565731,0.06069999933242798,0.2370000034570694,-0.3025999963283539,-0.08669999986886978,0.08669999986886978,-0.23190000653266907,0.21639999747276306,0.05400000140070915,0.12409999966621399],[-0.38260000944137573,0.13590000569820404,0.27889999747276306,0.4595000147819519,-0.5450999736785889,-1.375499963760376,-0.7918000221252441,-0.06870000064373016,-0.3991999924182892,0.05920000001788139,0.18780000507831573,-0.09920000284910202,-0.25540000200271606,0.33169999718666077,-0.3747999966144562,-0.4359000027179718,0.7506999969482422,0.4530999958515167,-0.6931999921798706,1.1026999950408936,0.09799999743700027,0.44350001215934753,0.08370000123977661,0.133200004696846,0.2784000039100647,-0.2937999963760376,0.8345000147819519,-1.0313999652862549,-0.03759999945759773,0.4065000116825104,-0.26030001044273376,-1.1109000444412231],[0.2906000018119812,-0.20509999990463257,-0.37940001487731934,-0.12960000336170197,0.3822999894618988,0.21289999783039093,-0.20819999277591705,-0.09849999845027924,0.014100000262260437,0.593999981880188,-0.5329999923706055,-0.4643000066280365,0.6281999945640564,-0.00279999990016222,-0.3677000105381012,-0.46299999952316284,-0.274399995803833,0.023499999195337296,-0.13259999454021454,-0.1356000006198883,-0.008700000122189522,0.20000000298023224,-0.2897999882698059,0.21299999952316284,-0.7542999982833862,-1.8194999694824219,-0.4115000069141388,0.31299999356269836,-0.09950000047683716,0.3163999915122986,-0.0925000011920929,0.6333000063896179],[0.15970000624656677,0.19470000267028809,-0.010099999606609344,0.19850000739097595,0.013500000350177288,-0.12280000001192093,-0.08720000088214874,-0.21709999442100525,-0.13019999861717224,-0.05249999836087227,0.11779999732971191,0.2522999942302704,-0.20270000398159027,0.0575999990105629,-0.1526000052690506,0.06960000097751617,-0.019200000911951065,-0.2685000002384186,0.13609999418258667,-0.08869999647140503,-0.07829999923706055,-0.15690000355243683,-0.09589999914169312,0.06270000338554382,-0.027799999341368675,0.04820000007748604,0.05310000106692314,0.19370000064373016,-0.0502999983727932,-0.21660000085830688,0.15649999678134918,-0.04859999939799309],[0.16349999606609344,0.05620000138878822,-0.019200000911951065,0.051100000739097595,0.28610000014305115,0.3046000003814697,0.010200000368058681,0.023499999195337296,0.15780000388622284,-0.12399999797344208,0.04879999905824661,-0.003800000064074993,0.04600000008940697,-0.12219999730587006,-0.23309999704360962,-0.30399999022483826,-0.1639000028371811,-0.06729999929666519,-0.0430000014603138,0.2840999960899353,0.16220000386238098,-0.14110000431537628,0.050999999046325684,-0.059700001031160355,-0.04170000180602074,0.0272000003606081,0.09080000221729279,-0.049800001084804535,0.15600000321865082,-0.16750000417232513,0.0008999999845400453,0.38089999556541443],[0.03269999846816063,0.2101999968290329,0.013399999588727951,0.0851999968290329,-0.008299999870359898,-0.02500000037252903,-0.11429999768733978,0.06310000270605087,-0.12489999830722809,0.09759999811649323,0.15919999778270721,0.05380000174045563,-0.041999999433755875,0.066600002348423,-0.04529999941587448,0.1371999979019165,-0.2685999870300293,-0.04919999837875366,-0.29190000891685486,-0.219200000166893,0.20000000298023224,0.13130000233650208,-0.1054999977350235,-0.22030000388622284,-0.43470001220703125,-0.07970000058412552,0.3549000024795532,0.06379999965429306,-0.08209999650716782,0.0681999996304512,-0.2289000004529953,-0.04360000044107437],[-1.238700032234192,0.8102999925613403,0.48339998722076416,-0.10869999974966049,0.032999999821186066,0.614799976348877,1.0302000045776367,0.2093999981880188,-0.9193000197410583,-0.450300008058548,1.291200041770935,0.16830000281333923,-0.3612000048160553,-0.8827999830245972,0.29109999537467957,0.09239999949932098,-0.2955000102519989,-0.4453999996185303,0.09839999675750732,-0.6952000260353088,0.9710999727249146,-0.7609000205993652,-0.3050999939441681,0.7232999801635742,0.3411000072956085,0.044199999421834946,-0.6608999967575073,-0.10859999805688858,-0.24729999899864197,-0.7251999974250793,-0.7031000256538391,0.5934000015258789],[0.1535000056028366,-0.4065000116825104,-0.013299999758601189,-0.5016999840736389,0.5570999979972839,-0.46970000863075256,-0.9276999831199646,0.004800000227987766,-0.15369999408721924,0.4408000111579895,-0.13359999656677246,-0.3046000003814697,0.49129998683929443,0.3560999929904938,0.062300000339746475,-0.17900000512599945,-0.26759999990463257,0.16760000586509705,-0.12710000574588776,-1.3473000526428223,-0.14059999585151672,-0.049800001084804535,0.1696999967098236,-0.15880000591278076,-0.5142999887466431,0.03819999843835831,-0.847100019454956,0.49720001220703125,0.03840000182390213,-0.8521000146865845,-0.05700000002980232,-0.07620000094175339],[0.8371000289916992,0.35830000042915344,-1.1851999759674072,-0.3255000114440918,-0.8891000151634216,-0.5618000030517578,-0.5374000072479248,-0.15719999372959137,0.3398999869823456,0.23180000483989716,-1.4214999675750732,0.23729999363422394,0.25360000133514404,0.290800005197525,-0.024700000882148743,0.046799998730421066,-0.06289999932050705,-0.4401000142097473,-0.3138999938964844,-0.08030000329017639,-1.1613999605178833,0.12370000034570694,-0.3937999904155731,-0.612500011920929,-0.30880001187324524,0.43220001459121704,0.7781999707221985,-0.15029999613761902,-0.0934000015258789,-0.21580000221729279,0.6348000168800354,0.2199999988079071],[-0.3174000084400177,0.3149000108242035,-0.2718999981880188,-0.1809999942779541,-0.2020999938249588,-0.1550000011920929,-0.23440000414848328,-0.32120001316070557,-0.1826000064611435,-0.05640000104904175,0.13230000436306,0.19629999995231628,0.023499999195337296,-0.12770000100135803,-0.21310000121593475,-0.5397999882698059,-0.040699999779462814,-0.13570000231266022,-0.33899998664855957,0.03099999949336052,-0.18410000205039978,-0.5842999815940857,-0.054099999368190765,0.3244999945163727,-0.25,-0.13410000503063202,0.2484000027179718,-0.0032999999821186066,-0.08129999786615372,-0.4462999999523163,-0.0006000000284984708,0.27970001101493835],[-0.219200000166893,0.10249999910593033,0.3009999990463257,0.025200000032782555,-0.0494999997317791,-0.020800000056624413,0.09019999951124191,-0.25380000472068787,0.02410000003874302,-0.05730000138282776,0.2709999978542328,-0.025499999523162842,0.24459999799728394,-0.16189999878406525,0.08609999716281891,0.046799998730421066,-0.1273999959230423,0.026000000536441803,0.1777999997138977,-0.04749999940395355,-0.24809999763965607,-0.0026000000070780516,-0.13230000436306,-0.050200000405311584,-0.012000000104308128,-0.2500999867916107,-0.23690000176429749,0.07069999724626541,-0.07670000195503235,-0.37610000371932983,0.11509999632835388,0.039900001138448715],[-0.1046999990940094,-0.1931000053882599,0.1225999966263771,0.05119999870657921,0.34940001368522644,0.06159999966621399,0.05689999833703041,-0.02449999935925007,0.11980000138282776,0.0917000025510788,0.18359999358654022,-0.07649999856948853,-0.06390000134706497,-0.07029999792575836,0.11599999666213989,0.21969999372959137,-0.06729999929666519,-0.062300000339746475,0.04610000178217888,-0.035999998450279236,0.1395999938249588,-0.3301999866962433,-0.12120000272989273,-0.11469999700784683,-0.3402999937534332,-0.1412999927997589,-0.13420000672340393,-0.029500000178813934,0.1632000058889389,-0.03590000048279762,-0.15119999647140503,-0.00839999970048666],[-0.4708000123500824,-0.49810001254081726,0.2361000031232834,-0.4562999904155731,0.6754000186920166,0.5383999943733215,1.1847000122070312,0.16060000658035278,-0.3538999855518341,0.12729999423027039,-0.5932000279426575,-0.5853000283241272,0.3499999940395355,-0.10260000079870224,0.46140000224113464,-0.19259999692440033,-0.48489999771118164,-1.0124000310897827,-0.5580000281333923,0.09350000321865082,0.2881999909877777,-0.5066999793052673,-0.554099977016449,0.7229999899864197,-0.9042999744415283,-0.5094000101089478,-0.2353000044822693,0.23100000619888306,0.027000000700354576,0.869700014591217,0.11919999867677689,0.8607000112533569],[0.37630000710487366,0.10279999673366547,-0.23749999701976776,-0.10920000076293945,-0.058800000697374344,0.39469999074935913,-0.7264999747276306,-0.2727000117301941,0.05050000175833702,-0.6776000261306763,1.13919997215271,0.09449999779462814,0.9496999979019165,-0.09570000320672989,-1.2883000373840332,-0.6818000078201294,-0.3409999907016754,0.6327000260353088,0.48010000586509705,1.176200032234192,-0.7810999751091003,0.0828000009059906,0.8009999990463257,0.5633000135421753,-0.5164999961853027,0.7301999926567078,0.5464000105857849,0.14890000224113464,0.05000000074505806,-0.13689999282360077,0.2890999913215637,-1.2348999977111816],[-0.18770000338554382,0.24660000205039978,0.25360000133514404,0.19930000603199005,0.03739999979734421,0.1981000006198883,0.0017999999690800905,0.02969999983906746,-0.16040000319480896,0.05820000171661377,0.008899999782443047,-0.19099999964237213,-0.007499999832361937,-0.011699999682605267,0.2635999917984009,0.13109999895095825,0.0017000000225380063,0.0364999994635582,0.006500000134110451,-0.02979999966919422,-0.15870000422000885,-0.022199999541044235,-0.10939999669790268,-0.1834000051021576,0.07500000298023224,0.05739999935030937,-0.2619999945163727,-0.017999999225139618,0.1459999978542328,0.15530000627040863,0.15039999783039093,0.00570000009611249],[-0.12389999628067017,-0.15889999270439148,0.05050000175833702,0.05559999868273735,0.18880000710487366,0.16130000352859497,-0.01940000057220459,-0.18250000476837158,-0.046799998730421066,0.03189999982714653,-0.029600000008940697,-0.08470000326633453,0.03709999844431877,-0.0738999992609024,-0.09210000187158585,0.04569999873638153,-0.05900000035762787,0.03579999879002571,0.04010000079870224,-0.1670999974012375,-0.0706000030040741,0.21080000698566437,-0.1703999936580658,-0.31040000915527344,-0.27300000190734863,0.00430000014603138,0.0044999998062849045,-0.01720000058412552,0.17810000479221344,-0.3919999897480011,0.05810000002384186,0.2290000021457672],[-0.16539999842643738,-0.05570000037550926,-0.1103999987244606,-0.13120000064373016,-0.04780000075697899,0.2092999964952469,0.2694000005722046,-0.049300000071525574,0.2793999910354614,0.005200000014156103,0.2572000026702881,-0.013700000010430813,0.019200000911951065,0.053599998354911804,0.46619999408721924,0.12479999661445618,-0.10369999706745148,0.1421000063419342,-0.05310000106692314,-0.07180000096559525,0.133200004696846,0.004600000102072954,0.04089999943971634,0.002099999925121665,0.049400001764297485,0.062300000339746475,-0.2840999960899353,0.09780000150203705,-0.14399999380111694,-0.21150000393390656,-0.00860000029206276,0.012299999594688416],[0.29739999771118164,-0.3905999958515167,-1.2891000509262085,-0.07880000025033951,-1.1153000593185425,0.008100000210106373,-0.7490000128746033,-0.0877000018954277,-0.3617999851703644,0.29159998893737793,0.5703999996185303,-0.6862000226974487,-0.4571000039577484,0.777999997138977,0.544700026512146,-0.11469999700784683,0.5658000111579895,0.7279999852180481,-0.835099995136261,-0.49070000648498535,-0.6668000221252441,0.8079000115394592,0.149399995803833,-0.23010000586509705,0.09719999879598618,-0.6216999888420105,-0.9527999758720398,-0.7771000266075134,-0.05990000069141388,-0.6136999726295471,-0.5719000101089478,-0.01979999989271164],[-0.2644999921321869,0.47440001368522644,0.2939999997615814,-0.35420000553131104,0.22310000658035278,-0.29190000891685486,-0.4097999930381775,0.08869999647140503,0.5942999720573425,-0.022099999710917473,-0.2029999941587448,0.04729999974370003,-0.5759999752044678,-0.7578999996185303,-0.5382000207901001,0.30219998955726624,-0.25279998779296875,-0.1940000057220459,0.1071000024676323,0.3345000147819519,0.6482999920845032,-0.13519999384880066,0.03790000081062317,-1.6920000314712524,0.20900000631809235,-1.097000002861023,0.7242000102996826,-0.5250999927520752,-0.024399999529123306,-0.23109999299049377,0.03539999946951866,-0.24130000174045563],[-0.09669999778270721,-0.10999999940395355,-0.07620000094175339,-0.16949999332427979,0.2736999988555908,0.28380000591278076,0.09489999711513519,-0.04659999907016754,-0.39480000734329224,-0.16169999539852142,0.7939000129699707,-0.022700000554323196,0.20000000298023224,0.06800000369548798,-0.20409999787807465,-0.21240000426769257,-0.07919999957084656,-0.09080000221729279,0.09780000150203705,-0.2736000120639801,0.05590000003576279,-0.5644000172615051,-0.29100000858306885,0.323199987411499,0.0348999984562397,0.15870000422000885,-0.11789999902248383,-0.15800000727176666,-0.12439999729394913,0.29919999837875366,-0.1761000007390976,0.376800000667572],[-0.188400000333786,0.12030000239610672,-0.28349998593330383,0.7289999723434448,1.0442999601364136,0.7275000214576721,-0.7002000212669373,-0.1875,1.509600043296814,1.2660000324249268,0.07020000368356705,0.12139999866485596,0.7318999767303467,0.1274999976158142,0.5403000116348267,0.41839998960494995,-0.28760001063346863,-0.4535999894142151,0.2915000021457672,0.4016999900341034,0.6115999817848206,-0.3833000063896179,0.2012999951839447,-0.25440001487731934,0.06210000067949295,0.9722999930381775,0.19249999523162842,0.17159999907016754,-0.04439999908208847,0.7656999826431274,0.07519999891519547,0.03530000150203705],[0.2630999982357025,0.19280000030994415,-0.016100000590085983,0.05169999971985817,0.11249999701976776,0.017799999564886093,0.019200000911951065,0.12080000340938568,-0.008700000122189522,-0.10689999908208847,-0.06080000102519989,0.09300000220537186,0.00039999998989515007,0.04989999905228615,0.09830000251531601,-0.054999999701976776,0.11089999973773956,0.05559999868273735,-0.181099995970726,0.21150000393390656,-0.07339999824762344,-0.24269999563694,-0.15330000221729279,-0.14970000088214874,0.007699999958276749,-0.04019999876618385,-0.049400001764297485,0.0908999964594841,0.049800001084804535,0.046300001442432404,0.060100000351667404,0.09040000289678574],[-0.3091000020503998,-0.05339999869465828,-0.3197000026702881,0.0052999998442828655,-0.000699999975040555,0.15330000221729279,0.17419999837875366,0.02969999983906746,-0.07339999824762344,0.07109999656677246,-0.07739999890327454,-0.00019999999494757503,0.1446000039577484,-0.08179999887943268,0.11819999665021896,0.09929999709129333,-0.14000000059604645,0.1428000032901764,0.10239999741315842,0.01489999983459711,-0.11180000007152557,-0.12600000202655792,-0.07880000025033951,0.07959999889135361,-0.14010000228881836,0.06419999897480011,-0.18209999799728394,-0.029899999499320984,0.016100000590085983,0.358599990606308,-0.20200000703334808,0.2159000039100647],[0.7835999727249146,-0.10890000313520432,0.5217999815940857,0.05209999904036522,-0.5918999910354614,0.4560000002384186,0.36320000886917114,0.1607999950647354,0.8733000159263611,-0.8133999705314636,0.06970000267028809,0.053199999034404755,0.40950000286102295,0.3549000024795532,-0.7409999966621399,-0.45320001244544983,0.27950000762939453,0.6729999780654907,0.0478999987244606,0.12020000070333481,-0.1454000025987625,0.9891999959945679,0.9070000052452087,0.329800009727478,-0.037300001829862595,-0.2425999939441681,-0.12080000340938568,1.1776000261306763,0.016200000420212746,-0.2994999885559082,0.09070000052452087,-0.8292999863624573],[-0.3098999857902527,0.11959999799728394,-0.24940000474452972,0.7057999968528748,1.0053999423980713,0.7544000148773193,-0.6923999786376953,0.0860000029206276,1.6033999919891357,1.357800006866455,0.12690000236034393,0.24770000576972961,0.8233000040054321,0.09040000289678574,0.49070000648498535,0.4255000054836273,-0.5210999846458435,-0.32760000228881836,0.3084999918937683,0.35010001063346863,0.5674999952316284,-0.3075999915599823,0.2354000061750412,-0.19300000369548798,0.10459999740123749,0.9575999975204468,0.2583000063896179,0.2574999928474426,0.1662999987602234,0.7476999759674072,0.07569999992847443,-0.22949999570846558],[0.7824000120162964,-0.025699999183416367,-0.48330000042915344,0.03139999881386757,1.0313999652862549,1.0928000211715698,0.03830000013113022,-0.09749999642372131,1.8444000482559204,0.7950000166893005,-1.4774999618530273,-0.15060000121593475,0.6840999722480774,0.5658000111579895,1.1016000509262085,0.9223999977111816,0.10239999741315842,0.46560001373291016,0.22259999811649323,0.45980000495910645,0.5396999716758728,0.40779998898506165,-0.3682999908924103,-0.16050000488758087,1.246000051498413,0.8944000005722046,0.035599999129772186,0.05979999899864197,0.149399995803833,1.0513999462127686,0.06109999865293503,-0.3937000036239624],[0.03999999910593033,-0.08229999989271164,0.1023000031709671,0.016200000420212746,0.00019999999494757503,0.2160000056028366,-0.3594000041484833,-0.2079000025987625,-0.17409999668598175,-0.053300000727176666,-0.037300001829862595,-0.22100000083446503,-0.1445000022649765,-0.12620000541210175,0.36039999127388,0.26420000195503235,-0.06040000170469284,-0.053300000727176666,-0.16850000619888306,-0.2797999978065491,-0.017100000753998756,-0.14630000293254852,-0.012400000356137753,-0.23469999432563782,-0.11169999837875366,0.021800000220537186,0.053700000047683716,0.06120000034570694,-0.19359999895095825,0.12530000507831573,-0.11729999631643295,0.09279999881982803],[-0.0015999999595806003,-0.20180000364780426,-0.04639999940991402,0.053599998354911804,0.08990000188350677,-0.02070000022649765,0.22460000216960907,0.1476999968290329,-0.03759999945759773,0.10999999940395355,0.28360000252723694,0.2874999940395355,-0.1800999939441681,-0.13590000569820404,0.21780000627040863,-0.15520000457763672,-0.193900004029274,-0.07129999995231628,0.06159999966621399,-0.014999999664723873,-0.09539999812841415,-0.09889999777078629,-0.10450000315904617,-0.1289999932050705,0.3346000015735626,0.04360000044107437,0.12999999523162842,-0.07169999927282333,-0.027300000190734863,-0.10459999740123749,-0.3889000117778778,-0.2020999938249588],[-1.1592999696731567,-0.6852999925613403,-0.9182000160217285,-0.012799999676644802,-0.6977999806404114,-0.014000000432133675,-1.781599998474121,0.05920000001788139,-1.2549999952316284,0.9434999823570251,0.388700008392334,-1.1247999668121338,-0.36629998683929443,-0.728600025177002,0.9656999707221985,0.5507000088691711,-0.4018000066280365,-0.579800009727478,-0.20640000700950623,-1.361899971961975,0.6220999956130981,-0.46470001339912415,0.14630000293254852,0.15129999816417694,0.10480000078678131,-1.2125999927520752,-0.628000020980835,-0.4966999888420105,0.0997999981045723,0.4278999865055084,-0.6675999760627747,-0.8970000147819519],[0.4932999908924103,-0.39239999651908875,0.3921999931335449,0.37310001254081726,0.26179999113082886,0.6886000037193298,-0.17970000207424164,-0.17800000309944153,1.194000005722046,0.10209999978542328,0.11860000342130661,-0.28619998693466187,0.5454999804496765,0.120899997651577,0.3856000006198883,0.35569998621940613,-0.0908999964594841,0.20489999651908875,0.05490000173449516,0.04820000007748604,0.288100004196167,0.1875,1.166100025177002,0.2685000002384186,0.043800000101327896,0.5476999878883362,-0.39559999108314514,0.10740000009536743,-0.14139999449253082,0.6541000008583069,0.01679999940097332,-0.6004999876022339],[0.26019999384880066,-1.0298000574111938,0.025599999353289604,1.1726000308990479,-0.25780001282691956,0.21610000729560852,-0.35589998960494995,-0.10409999638795853,0.013799999840557575,-0.10029999911785126,-0.24570000171661377,0.647599995136261,0.23240000009536743,-0.5228000283241272,0.13940000534057617,0.6638000011444092,-0.11150000244379044,-0.7652999758720398,-0.3386000096797943,-0.1054999977350235,-0.20239999890327454,-0.7343000173568726,0.1648000031709671,-0.6373000144958496,-0.21819999814033508,-0.3637999892234802,-0.47769999504089355,-0.3935000002384186,-0.4074000120162964,-0.2644999921321869,0.05999999865889549,-0.26919999718666077],[-0.0989999994635582,0.05920000001788139,0.08290000259876251,0.26930001378059387,-0.02979999966919422,0.05510000139474869,-0.21780000627040863,0.1746000051498413,-0.11150000244379044,-0.08219999819993973,-0.0032999999821186066,-0.22920000553131104,0.03350000083446503,0.14190000295639038,0.0430000014603138,-0.2329999953508377,-0.018200000748038292,0.1088000014424324,-0.2754000127315521,-0.15760000050067902,0.12849999964237213,0.03959999978542328,0.06040000170469284,0.2727000117301941,0.06870000064373016,0.09650000184774399,0.39750000834465027,-0.03139999881386757,-0.11699999868869781,0.06270000338554382,0.06440000236034393,-0.07720000296831131],[-0.15139999985694885,0.33869999647140503,0.0478999987244606,-0.10740000009536743,0.13429999351501465,-0.01600000075995922,-0.03709999844431877,0.08250000327825546,-0.18950000405311584,0.05169999971985817,0.28049999475479126,0.06840000301599503,-0.0551999993622303,-0.07440000027418137,-0.06019999831914902,-0.03720000013709068,-0.055399999022483826,0.13439999520778656,-0.2542000114917755,0.12639999389648438,-0.05570000037550926,0.05530000105500221,-0.16529999673366547,0.19480000436306,0.1826999932527542,0.14069999754428864,-0.22210000455379486,0.12160000205039978,0.05939999967813492,-0.2354000061750412,-0.003599999938160181,0.05350000038743019],[0.08150000125169754,0.026000000536441803,0.04270000010728836,0.21610000729560852,0.17980000376701355,-0.4203999936580658,-0.04659999907016754,-0.02410000003874302,-0.25690001249313354,0.013799999840557575,0.18310000002384186,-0.15929999947547913,0.049300000071525574,-0.13429999351501465,-0.09849999845027924,0.2167000025510788,-0.07959999889135361,0.06780000030994415,-0.274399995803833,0.27309998869895935,0.08839999884366989,-0.026799999177455902,0.0843999981880188,-0.20669999718666077,0.17339999973773956,-0.04749999940395355,-0.029899999499320984,-0.07209999859333038,-0.0851999968290329,0.10189999639987946,0.03750000149011612,0.09560000151395798],[0.9434999823570251,0.031099999323487282,-0.08739999681711197,-1.0960999727249146,-0.22990000247955322,0.8810999989509583,-0.5379999876022339,-0.18060000240802765,1.6403000354766846,0.638700008392334,0.34049999713897705,-1.5956000089645386,-0.05979999899864197,-0.48660001158714294,0.41530001163482666,0.8787999749183655,-0.8705999851226807,0.367900013923645,1.0492000579833984,-0.593500018119812,0.6409000158309937,-0.16609999537467957,1.076200008392334,0.2590000033378601,-0.6108999848365784,-0.23980000615119934,0.12399999797344208,0.6071000099182129,-0.11800000071525574,0.32710000872612,0.1662999987602234,-0.004699999932199717],[0.6624000072479248,-0.1324000060558319,-0.616100013256073,-0.6970000267028809,-0.3659000098705292,-0.21629999577999115,2.461199998855591,0.14630000293254852,0.6190000176429749,-0.23739999532699585,-1.9076000452041626,-0.7585999965667725,-1.0541000366210938,0.6585999727249146,0.7695000171661377,0.32820001244544983,0.8547999858856201,1.319100022315979,0.15399999916553497,0.05689999833703041,-0.041999999433755875,0.6851000189781189,-0.37869998812675476,0.9340999722480774,0.8335999846458435,-0.18930000066757202,0.03720000013709068,-0.021400000900030136,-0.2092999964952469,0.01640000008046627,-0.02979999966919422,-0.06560000032186508],[-0.0020000000949949026,-0.33149999380111694,-0.02800000086426735,-0.023900000378489494,0.3073999881744385,-0.21369999647140503,-0.05730000138282776,0.2502000033855438,0.06599999964237213,0.08259999752044678,0.01679999940097332,0.04839999973773956,0.11400000005960464,-0.11869999766349792,0.12880000472068787,-0.2012999951839447,0.04820000007748604,0.026200000196695328,-0.09040000289678574,-0.0032999999821186066,-0.09130000323057175,-0.15719999372959137,-0.051899999380111694,-0.16189999878406525,0.04729999974370003,-0.16869999468326569,0.10440000146627426,-0.17329999804496765,-0.08299999684095383,-0.09160000085830688,0.19429999589920044,0.04839999973773956],[-0.031099999323487282,0.0731000006198883,-0.3089999854564667,-0.006300000008195639,0.2928999960422516,0.01940000057220459,0.009999999776482582,0.0803999975323677,0.13130000233650208,-0.2928999960422516,-0.2467000037431717,0.030799999833106995,-0.10480000078678131,0.1923999935388565,-0.04619999974966049,-0.28369998931884766,-0.1860000044107437,-0.4032000005245209,-0.034299999475479126,-0.02759999968111515,-0.062199998646974564,0.1581999957561493,0.17579999566078186,-0.02500000037252903,-0.31299999356269836,0.09049999713897705,0.08139999955892563,0.04540000110864639,0.14390000700950623,-0.17080000042915344,0.2946000099182129,-0.14069999754428864],[-0.3700000047683716,-0.40869998931884766,0.13249999284744263,0.334199994802475,0.3594000041484833,0.19820000231266022,0.4397999942302704,-0.015399999916553497,0.5055000185966492,-0.5871000289916992,-0.04969999939203262,-0.31310001015663147,0.14820000529289246,0.2653000056743622,-0.8880000114440918,-0.951200008392334,0.2906000018119812,-0.050700001418590546,0.6814000010490417,0.10809999704360962,-0.07919999957084656,0.6632000207901001,0.5328999757766724,0.4185999929904938,0.1453000009059906,-0.04670000076293945,-1.0708999633789062,-0.48100000619888306,-0.1378999948501587,-0.11879999935626984,-0.46709999442100525,-0.40959998965263367],[0.5602999925613403,-0.5580999851226807,0.30059999227523804,0.020899999886751175,-0.25099998712539673,0.2558000087738037,-0.18970000743865967,-0.2678999900817871,0.460099995136261,-0.11739999800920486,-0.9429000020027161,-0.21359999477863312,0.031300000846385956,0.12690000236034393,0.3165999948978424,0.43160000443458557,0.006800000090152025,0.36329999566078186,-0.3919999897480011,0.06669999659061432,-0.09350000321865082,-0.006099999882280827,0.18860000371932983,0.0925000011920929,0.09369999915361404,-0.29100000858306885,-0.12430000305175781,0.08940000087022781,-0.006399999838322401,0.30640000104904175,0.20090000331401825,-0.6060000061988831],[-0.008100000210106373,0.16609999537467957,0.18539999425411224,-0.2084999978542328,-0.04580000042915344,0.19920000433921814,0.07450000196695328,0.028599999845027924,-0.03189999982714653,-0.056299999356269836,0.04230000078678131,-0.03700000047683716,-0.006200000178068876,0.011500000022351742,-0.09939999878406525,0.07800000160932541,0.42739999294281006,-0.2606000006198883,0.04749999940395355,-0.11150000244379044,0.08470000326633453,0.006800000090152025,0.11169999837875366,0.17239999771118164,0.028200000524520874,0.16599999368190765,-0.34380000829696655,0.23319999873638153,0.054999999701976776,0.15809999406337738,-0.17890000343322754,-0.121799997985363],[0.021400000900030136,-0.0024999999441206455,0.04149999842047691,0.1589999943971634,-0.258899986743927,0.1428000032901764,0.0012000000569969416,-0.029899999499320984,-0.21570000052452087,0.0737999975681305,-0.3540000021457672,0.09510000050067902,-0.21879999339580536,0.007799999788403511,-0.017500000074505806,0.17149999737739563,-0.026200000196695328,-0.10180000215768814,-0.07429999858140945,0.1867000013589859,0.07859999686479568,-0.05660000070929527,-0.034699998795986176,-0.2298000007867813,0.05700000002980232,-0.2581000030040741,0.11020000278949738,0.01889999955892563,0.3499999940395355,-0.16130000352859497,-0.01510000042617321,0.263700008392334],[0.17470000684261322,-0.10209999978542328,0.03280000016093254,0.0003000000142492354,0.04129999876022339,-0.10249999910593033,-0.013100000098347664,-0.23430000245571136,0.01979999989271164,0.06599999964237213,-0.033399999141693115,-0.23680000007152557,0.14499999582767487,0.05350000038743019,-0.10649999976158142,-0.041099999099969864,-0.22010000050067902,-0.15039999783039093,-0.07890000194311142,0.1800999939441681,-0.09380000084638596,0.09390000253915787,-0.07890000194311142,0.036400001496076584,-0.02070000022649765,0.12800000607967377,-0.07840000092983246,-0.2305999994277954,-0.20270000398159027,-0.07800000160932541,-0.18320000171661377,0.06019999831914902],[-0.06830000132322311,0.3481999933719635,-0.2547999918460846,0.029899999499320984,-0.16539999842643738,-0.07240000367164612,0.02070000022649765,-0.3409999907016754,0.034699998795986176,0.2791000008583069,-0.06650000065565109,0.038100000470876694,0.15029999613761902,-0.024000000208616257,-0.0851999968290329,-0.3337000012397766,0.09399999678134918,-0.016599999740719795,-0.148499995470047,0.01860000006854534,-0.08560000360012054,-0.07750000059604645,0.08889999985694885,-0.19629999995231628,0.15360000729560852,-0.20499999821186066,-0.09719999879598618,0.28200000524520874,0.16529999673366547,0.014299999922513962,-0.1378999948501587,-0.07760000228881836],[0.010700000450015068,0.005499999970197678,-0.013299999758601189,-0.0044999998062849045,-0.03139999881386757,-0.21150000393390656,-0.07569999992847443,0.13410000503063202,-0.20069999992847443,-0.027799999341368675,-0.12020000070333481,0.016300000250339508,-0.05700000002980232,0.2167000025510788,0.07429999858140945,-0.1923999935388565,0.09839999675750732,-0.1136000007390976,-0.08460000157356262,0.04600000008940697,-0.07209999859333038,0.13089999556541443,-0.1136000007390976,-0.09080000221729279,-0.09629999846220016,-0.08290000259876251,0.16120000183582306,0.09220000356435776,0.2508000135421753,0.33250001072883606,-0.15119999647140503,0.010300000198185444],[-0.17790000140666962,-0.3370000123977661,-0.211899995803833,-0.22120000422000885,-0.4083000123500824,-0.06159999966621399,-0.17030000686645508,0.05339999869465828,-0.7214000225067139,0.03830000013113022,-0.4864000082015991,-0.050999999046325684,-0.9501000046730042,0.17260000109672546,0.6251999735832214,0.717199981212616,-0.04190000146627426,0.4316999912261963,0.11100000143051147,0.20069999992847443,0.21170000731945038,-0.19140000641345978,-1.2111999988555908,0.46619999408721924,0.37459999322891235,0.17790000140666962,-0.08959999680519104,-1.2897000312805176,-0.009200000204145908,-0.14650000631809235,-0.2930999994277954,-0.4348999857902527],[0.04019999876618385,-0.04410000145435333,-0.27160000801086426,-0.04780000075697899,-0.04800000041723251,-0.021700000390410423,-0.08259999752044678,-0.06499999761581421,-0.005799999926239252,0.0649000033736229,-0.044599998742341995,-0.060100000351667404,0.013500000350177288,-0.2816999852657318,0.07000000029802322,-9.999999747378752e-05,0.005799999926239252,0.14090000092983246,-0.2863999903202057,-0.28949999809265137,0.04019999876618385,-0.0010000000474974513,0.02500000037252903,-0.06780000030994415,0.09740000218153,0.13680000603199005,0.07100000232458115,-0.03819999843835831,-0.3091000020503998,0.1128000020980835,0.17919999361038208,0.09449999779462814],[-0.1289999932050705,0.09880000352859497,0.12620000541210175,0.22859999537467957,-0.12849999964237213,-0.03319999948143959,0.1096000000834465,0.00839999970048666,-0.1639000028371811,0.06080000102519989,0.08489999920129776,0.012900000438094139,0.03220000118017197,-0.03790000081062317,0.2168000042438507,-0.13210000097751617,-0.08609999716281891,0.0015999999595806003,0.12890000641345978,-0.21960000693798065,-0.19220000505447388,-0.298799991607666,0.004800000227987766,-0.164000004529953,-0.05640000104904175,0.09700000286102295,-0.0940999984741211,0.033900000154972076,-0.04390000179409981,0.09860000014305115,0.06970000267028809,-0.1014999970793724],[0.15700000524520874,-0.08429999649524689,0.682699978351593,0.17080000042915344,0.013000000268220901,2.421600103378296,-0.5867999792098999,0.07490000128746033,0.8916000127792358,0.3700999915599823,1.8386000394821167,-0.08900000154972076,0.677299976348877,0.41670000553131104,-0.3467999994754791,-0.6730999946594238,-0.36970001459121704,-1.136199951171875,-0.15610000491142273,-0.09870000183582306,-0.22509999573230743,0.9379000067710876,1.1009000539779663,-0.6049000024795532,-0.3336000144481659,0.2084999978542328,-0.6227999925613403,1.0480999946594238,-0.2944999933242798,0.5037999749183655,-0.17839999496936798,0.050700001418590546],[-0.15860000252723694,-0.21410000324249268,0.2939999997615814,-0.149399995803833,-0.4334000051021576,-0.2583000063896179,-0.19030000269412994,-0.18369999527931213,-0.7264999747276306,-0.21299999952316284,-0.33410000801086426,-0.24459999799728394,-0.4431999921798706,0.20430000126361847,0.2533999979496002,0.4772000014781952,0.03779999911785126,0.17569999396800995,0.2802000045776367,0.0015999999595806003,-0.02290000021457672,-0.006899999920278788,-0.4742000102996826,0.46630001068115234,0.09669999778270721,-0.4277999997138977,-0.09290000051259995,-0.9758999943733215,-0.14380000531673431,0.1331000030040741,-0.013799999840557575,-0.6600000262260437],[-0.02459999918937683,0.2037000060081482,-0.24809999763965607,0.06780000030994415,0.027000000700354576,-0.09440000355243683,-0.1671999990940094,-0.25369998812675476,0.12049999833106995,-0.0203000009059906,-0.1152999997138977,-0.17399999499320984,-0.07980000227689743,0.16830000281333923,-0.2556000053882599,0.18790000677108765,-0.10409999638795853,-0.05040000006556511,-0.219200000166893,-0.1826000064611435,-0.15060000121593475,-0.09179999679327011,-0.13230000436306,-0.18979999423027039,-0.09489999711513519,-0.06939999759197235,-0.08540000021457672,-0.22750000655651093,-0.18119999766349792,0.2809999883174896,-0.07880000025033951,0.19840000569820404]];
+const b1=[-0.07029999792575836,0.23600000143051147,-0.12020000070333481,-0.21549999713897705,0.0066999997943639755,-0.22050000727176666,-0.11620000004768372,-0.1331000030040741,-0.2872999906539917,-0.09189999848604202,0.2222999930381775,-0.016499999910593033,0.08810000121593475,-0.1324000060558319,-0.2526000142097473,-0.4489000141620636,-0.10970000177621841,-0.057500001043081284,-0.27869999408721924,-0.1687999963760376,-0.03150000050663948,-0.2304999977350235,-0.2903999984264374,-0.049300000071525574,-0.19059999287128448,0.14990000426769257,0.2939999997615814,0.03869999945163727,-0.05350000038743019,-0.28299999237060547,-0.08560000360012054,0.20280000567436218];
+const W2=[[-0.5410000085830688,-0.13349999487400055,-0.5853999853134155,0.5529999732971191,0.30160000920295715,-0.36660000681877136,1.0794999599456787,0.003700000001117587,-0.12700000405311584,-0.18559999763965607,0.028200000524520874,-0.0215000007301569,-0.9797999858856201,0.448199987411499,-0.21850000321865082,-0.01489999983459711],[0.1039000004529953,-0.2888000011444092,-0.37220001220703125,-0.040300000458955765,-0.3587999939918518,0.38280001282691956,-1.2354999780654907,-0.15870000422000885,-1.0187000036239624,-0.43309998512268066,-0.20180000364780426,0.2549999952316284,0.11100000143051147,0.20059999823570251,0.15520000457763672,0.22499999403953552],[-1.2756999731063843,-0.21040000021457672,-0.002899999963119626,-0.9157000184059143,0.2766999900341034,0.20260000228881836,-0.06109999865293503,0.21879999339580536,0.41179999709129333,0.4754999876022339,-0.4546000063419342,0.4090999960899353,-0.6700000166893005,0.10050000250339508,-0.09640000015497208,0.3276999890804291],[-0.0778999999165535,-0.2870999872684479,0.35499998927116394,0.48080000281333923,-1.3387000560760498,-0.3264999985694885,-0.7576000094413757,0.08799999952316284,-0.21899999678134918,-0.16439999639987946,-0.6017000079154968,0.12600000202655792,0.19779999554157257,-0.3711000084877014,0.3774000108242035,-0.12409999966621399],[0.6833000183105469,-0.19480000436306,-0.0885000005364418,0.05660000070929527,-0.11500000208616257,-0.7612000107765198,1.1546000242233276,0.1412999927997589,-0.3208000063896179,-0.0333000011742115,0.8008000254631042,-0.5608999729156494,0.5370000004768372,-0.21449999511241913,0.37610000371932983,-0.8442999720573425],[0.3564999997615814,-0.2321999967098236,0.19740000367164612,-0.5444999933242798,0.2838999927043915,-0.4429999887943268,-0.7940999865531921,0.4325000047683716,-0.20640000700950623,-0.33820000290870667,0.7297000288963318,0.054999999701976776,-0.7067000269889832,-0.3249000012874603,0.11659999936819077,0.3066999912261963],[-0.8166000247001648,-0.3716999888420105,0.9448000192642212,0.8040000200271606,0.7892000079154968,1.0455000400543213,0.2709999978542328,0.005400000140070915,0.06809999793767929,-0.5989000201225281,1.8626999855041504,0.053700000047683716,-0.4699999988079071,0.4309999942779541,-0.0019000000320374966,1.8837000131607056],[-0.0010999999940395355,-0.03530000150203705,0.35749998688697815,0.031300000846385956,0.24779999256134033,0.03579999879002571,-0.2079000025987625,-0.22370000183582306,-0.27379998564720154,0.07090000063180923,0.08969999849796295,-0.19830000400543213,0.08150000125169754,0.06270000338554382,-0.3352000117301941,-0.07819999754428864],[0.8707000017166138,-0.24199999868869781,-0.8198000192642212,-0.2574999928474426,0.7649000287055969,-0.01119999960064888,0.8014000058174133,-0.4189000129699707,0.7240999937057495,0.6219000220298767,0.845300018787384,0.8780999779701233,0.0989999994635582,0.6611999869346619,0.8230999708175659,0.4512999951839447],[0.6870999932289124,-0.28870001435279846,-0.580299973487854,0.3046000003814697,-0.08009999990463257,-0.6622999906539917,0.07959999889135361,0.23600000143051147,-0.4650000035762787,-0.21140000224113464,0.08330000191926956,-0.16910000145435333,0.3797999918460846,0.421999990940094,0.2976999878883362,-0.00800000037997961],[-0.2612999975681305,-0.11069999635219574,0.05739999935030937,-2.125200033187866,-0.48570001125335693,-0.05820000171661377,-0.5644999742507935,0.3619000017642975,0.4074000120162964,-0.0738999992609024,-1.0988999605178833,0.5982999801635742,-0.5597000122070312,0.0706000030040741,0.8418999910354614,-0.40799999237060547],[-1.0328999757766724,-0.24140000343322754,-0.7443000078201294,0.15870000422000885,-0.7391999959945679,0.19480000436306,-0.7311000227928162,0.14560000598430634,-0.39259999990463257,0.1281999945640564,-1.4020999670028687,0.10480000078678131,-0.5109000205993652,0.3337000012397766,0.006300000008195639,0.019700000062584877],[-0.03440000116825104,-0.20180000364780426,-0.18529999256134033,0.1421000063419342,-0.20419999957084656,-0.38940000534057617,0.9531999826431274,0.5303000211715698,0.24469999969005585,-0.34880000352859497,0.06379999965429306,0.3776000142097473,-0.058400001376867294,-0.18629999458789825,0.515999972820282,-0.28360000252723694],[-0.1679999977350235,-0.30309998989105225,0.4408000111579895,0.5552999973297119,-0.06560000032186508,-0.1289999932050705,0.5633999705314636,-0.07349999994039536,-0.35260000824928284,-0.3481000065803528,-0.34700000286102295,-0.35989999771118164,0.09629999846220016,-0.375,0.020800000056624413,-0.3637999892234802],[0.8707000017166138,-0.09520000219345093,0.16580000519752502,-0.3418999910354614,0.47350001335144043,-0.6783000230789185,-0.25209999084472656,-0.49559998512268066,-0.7649000287055969,-0.02500000037252903,0.5523999929428101,-0.48730000853538513,1.2475999593734741,0.3555000126361847,0.3605000078678131,0.04390000179409981],[0.2443999946117401,-0.1492999941110611,-0.08030000329017639,-0.6718999743461609,0.795799970626831,0.40139999985694885,0.4846000075340271,-0.2467000037431717,-0.2304999977350235,0.36719998717308044,0.4677000045776367,0.03779999911785126,0.4830999970436096,0.39980000257492065,-0.2085999995470047,0.04780000075697899],[-0.13699999451637268,-0.17350000143051147,0.4941999912261963,0.5809000134468079,0.30720001459121704,0.5228999853134155,0.011800000444054604,-0.06629999727010727,0.41839998960494995,-0.05480000004172325,-0.38839998841285706,-0.07999999821186066,0.5440999865531921,0.2759000062942505,-0.08619999885559082,-0.21459999680519104],[-0.34279999136924744,-0.012199999764561653,0.37860000133514404,0.633400022983551,0.6011999845504761,0.39989998936653137,0.722599983215332,-0.25290000438690186,0.00430000014603138,0.014299999922513962,-0.7897999882698059,-0.5871999859809875,-0.1607999950647354,-0.07159999758005142,-1.0887000560760498,-0.5950000286102295],[0.46959999203681946,-0.3156999945640564,-0.27559998631477356,0.3935999870300293,0.0940999984741211,-0.2547999918460846,-0.791700005531311,0.5027999877929688,0.2524000108242035,-0.08709999918937683,-0.3855000138282776,0.3515999913215637,-0.33629998564720154,-1.3356000185012817,-0.40529999136924744,-0.2362000048160553],[-1.1482000350952148,-0.10090000182390213,0.5220000147819519,0.03449999913573265,-1.0303000211715698,0.5217999815940857,-0.16850000619888306,0.00989999994635582,0.4260999858379364,0.3174000084400177,-0.45419999957084656,0.11800000071525574,-0.22849999368190765,-0.023900000378489494,-0.06210000067949295,-0.6525999903678894],[0.09830000251531601,0.03420000150799751,-0.3903000056743622,-1.7825000286102295,-0.06830000132322311,0.5123000144958496,-0.42419999837875366,-0.720300018787384,0.01119999960064888,0.3783000111579895,0.367900013923645,0.21379999816417694,0.27160000801086426,0.42250001430511475,0.11879999935626984,0.3041999936103821],[-0.329800009727478,-0.32260000705718994,0.3012000024318695,0.8634999990463257,0.3709999918937683,-0.2094999998807907,0.5483999848365784,0.43209999799728394,0.48179998993873596,-0.1509000062942505,-0.3562999963760376,0.0892999991774559,-0.4153999984264374,-0.305400013923645,-0.31619998812675476,-0.3801000118255615],[0.16339999437332153,-0.33239999413490295,0.3379000127315521,-0.12559999525547028,0.42559999227523804,0.2168000042438507,0.4293999969959259,0.30799999833106995,1.1543999910354614,0.3237999975681305,-0.26080000400543213,1.0595999956130981,-0.5648000240325928,-0.02810000069439411,1.0069999694824219,-0.36059999465942383],[-0.15129999816417694,-0.08320000022649765,0.6201000213623047,-0.23999999463558197,-0.8192999958992004,0.014299999922513962,-1.2252999544143677,0.5076000094413757,-0.47040000557899475,-0.42649999260902405,0.17180000245571136,-0.79830002784729,-0.009100000374019146,-0.6899999976158142,-0.4000000059604645,-0.06639999896287918],[0.6924999952316284,0.028200000524520874,0.4970000088214874,0.483599990606308,0.45500001311302185,0.5852000117301941,-0.38199999928474426,-0.17679999768733978,-0.006399999838322401,-0.1518000066280365,-0.41999998688697815,-0.13459999859333038,0.5242000222206116,0.39010000228881836,-0.19009999930858612,-0.13590000569820404],[0.8808000087738037,-0.3278999924659729,0.20069999992847443,-0.1647000014781952,1.5471999645233154,1.3277000188827515,-0.014700000174343586,-0.6355999708175659,0.8158000111579895,-0.1128000020980835,-0.6926000118255615,1.0715999603271484,0.21690000593662262,0.57669997215271,0.573199987411499,0.3977000117301941],[-0.754800021648407,-0.25609999895095825,0.13369999825954437,-0.23479999601840973,-1.8499000072479248,0.35370001196861267,-0.27810001373291016,-0.45809999108314514,-0.44920000433921814,-0.2768999934196472,-0.0714000016450882,0.05620000138878822,-0.01269999984651804,0.33959999680519104,-0.54830002784729,0.14509999752044678],[-0.37229999899864197,-0.27649998664855957,-0.8906999826431274,1.257599949836731,-0.07419999688863754,-0.5895000100135803,1.044100046157837,-0.1006999984383583,-0.6672000288963318,-0.18889999389648438,-0.062300000339746475,-0.0348999984562397,-0.8093000054359436,-0.12479999661445618,0.14059999585151672,-0.782800018787384],[-0.09109999984502792,0.20010000467300415,0.004000000189989805,-0.14239999651908875,-0.17679999768733978,-0.3896999955177307,0.005900000222027302,-0.07240000367164612,-0.4311999976634979,-0.10939999669790268,-0.13050000369548798,0.3215999901294708,-0.3476000130176544,-0.29420000314712524,0.22660000622272491,0.3303999900817871],[0.10949999839067459,-0.3499000072479248,0.15129999816417694,-1.066499948501587,-1.1877000331878662,-0.18729999661445618,0.296099990606308,0.1339000016450882,-0.060499999672174454,0.33219999074935913,0.5508000254631042,-0.056699998676776886,0.30410000681877136,0.17739999294281006,0.1316000074148178,-0.0771000012755394],[-0.7962999939918518,-0.14470000565052032,-0.8935999870300293,0.08349999785423279,-0.34049999713897705,-0.03720000013709068,0.4081999957561493,0.18889999389648438,-0.7095000147819519,-0.03359999880194664,-0.23280000686645508,0.12150000035762787,-0.20440000295639038,0.5587999820709229,-0.5580999851226807,0.0027000000700354576],[-0.6615999937057495,0.06539999693632126,0.06129999831318855,0.12039999663829803,-0.45179998874664307,-0.09690000116825104,0.7396000027656555,-0.11420000344514847,0.0658000037074089,0.06040000170469284,-1.9149999618530273,-0.4027999937534332,-0.4129999876022339,-0.20270000398159027,-0.992900013923645,-1.188599944114685]];
+const b2=[-0.28850001096725464,-0.27129998803138733,0.20819999277591705,-0.12370000034570694,-0.3312000036239624,0.015799999237060547,0.1306000053882599,0.1891999989748001,-0.322299987077713,-0.3628000020980835,-0.33550000190734863,-0.056299999356269836,-0.11540000140666962,0.08290000259876251,-0.23849999904632568,-0.3352000117301941];
+const W3=[[0.18279999494552612,-2.163300037384033,-1.9213999509811401,2.0318000316619873,0.22269999980926514,-0.02590000070631504,-0.477400004863739,-0.9174000024795532],[0.028999999165534973,0.10289999842643738,-0.17829999327659607,-0.0575999990105629,-0.5271000266075134,-0.0052999998442828655,0.15469999611377716,-0.2596000134944916],[0.6951000094413757,-2.759200096130371,-1.0841000080108643,-0.858299970626831,0.6765999794006348,-1.3615000247955322,-2.737799882888794,-1.0914000272750854],[0.2273000031709671,0.8007000088691711,-0.12129999697208405,-1.3312000036239624,-1.2014000415802002,-1.5740000009536743,0.8027999997138977,0.35269999504089355],[0.29030001163482666,-1.4424999952316284,-2.580399990081787,-0.4918000102043152,0.28110000491142273,-1.8323999643325806,1.2862999439239502,1.0720000267028809],[0.6262999773025513,-3.2832000255584717,0.4984999895095825,-2.57450008392334,0.6323999762535095,-3.0385000705718994,-3.472599983215332,0.5171999931335449],[-0.07320000231266022,0.8011000156402588,-1.0224000215530396,-0.9736999869346619,-0.09740000218153,-0.3050000071525574,0.8169000148773193,-3.082200050354004],[0.35359999537467957,0.6660000085830688,-1.4768999814987183,-2.557499885559082,0.34709998965263367,-0.1517000049352646,0.6715999841690063,-1.3973000049591064],[0.40689998865127563,-2.165299892425537,0.28940001130104065,-0.8587999939918518,0.4074999988079071,0.7394000291824341,-2.020699977874756,0.3450999855995178],[0.09730000048875809,-3.9203999042510986,0.32359999418258667,-0.3125999867916107,0.06769999861717224,-0.8870000243186951,-3.1242001056671143,0.37209999561309814],[-0.21780000627040863,1.4773000478744507,-0.3939000070095062,1.193600058555603,-0.1826999932527542,-0.002099999925121665,-2.481800079345703,-0.11680000275373459],[-2.511199951171875,-0.1404999941587448,0.5040000081062317,-1.805999994277954,-2.571899890899658,1.6038000583648682,-0.15610000491142273,0.510200023651123],[0.29660001397132874,-0.27160000801086426,0.23829999566078186,1.541200041770935,0.24310000240802765,-1.6100000143051147,-0.1005999967455864,0.10499999672174454],[-3.127000093460083,0.31150001287460327,0.6862999796867371,-0.34549999237060547,-2.683799982070923,-2.6582999229431152,0.2994999885559082,0.692799985408783],[-1.0600999593734741,-0.24869999289512634,0.2913999855518341,0.5706999897956848,-0.9635000228881836,1.6514999866485596,-0.17520000040531158,0.2628999948501587],[0.9567000269889832,-0.15940000116825104,0.4602000117301941,0.1729000061750412,-1.3415000438690186,-0.42500001192092896,-0.5446000099182129,0.5746999979019165]];
+const b3=[0.0044999998062849045,0.5250999927520752,-0.3555999994277954,-0.6534000039100647,0.048500001430511475,-1.0680999755859375,0.48030000925064087,-0.32989999651908875];
+</script>
+
+<!-- Demo Logic -->
+<script>
+// ── Constants ──
+const VOCAB = {0:'the', 1:'cat', 2:'sat', 3:'on', 4:'a', 5:'mat', 6:'dog', 7:'ran'};
+const TOKEN2ID = {};
+Object.entries(VOCAB).forEach(([k,v]) => TOKEN2ID[v] = parseInt(k));
+const VOCAB_SIZE = 8;
+const MAX_SEQ_LEN = 6;
+const DIMS_PER_POS = VOCAB_SIZE + 2; // 10
+const INPUT_DIM = MAX_SEQ_LEN * DIMS_PER_POS + 1; // 61
+const COLORS = ['#2997ff','#ff9f0a','#ff375f','#30d158','#bf5af2','#ffd60a','#ff453a','#5ac8fa'];
+
+// ── Sentence state ──
+let sentence = []; // array of token strings or '___'
+let hasMask = false;
+
+// ── Init vocab buttons ──
+const vocabDiv = document.getElementById('vocab-buttons');
+Object.entries(VOCAB).forEach(([id, tok]) => {
+  const btn = document.createElement('button');
+  btn.className = 'token-btn';
+  btn.textContent = tok;
+  btn.onclick = () => addToken(tok);
+  vocabDiv.appendChild(btn);
+});
+
+function addToken(tok) {
+  if (sentence.length >= MAX_SEQ_LEN) return;
+  sentence.push(tok);
+  updateDisplay();
+}
+
+function addMask() {
+  if (sentence.length >= MAX_SEQ_LEN) return;
+  if (hasMask) return;
+  sentence.push('___');
+  hasMask = true;
+  updateDisplay();
+}
+
+function clearSentence() {
+  sentence = [];
+  hasMask = false;
+  document.getElementById('prob-container').style.display = 'none';
+  document.getElementById('prediction-result').className = 'prediction-result';
+  updateDisplay();
+}
+
+function loadExample() {
+  sentence = ['the', '___', 'sat', 'on', 'the', 'mat'];
+  hasMask = true;
+  document.getElementById('prob-container').style.display = 'none';
+  document.getElementById('prediction-result').className = 'prediction-result';
+  updateDisplay();
+}
+
+function updateDisplay() {
+  const display = document.getElementById('sentence-display');
+  const predictBtn = document.getElementById('predict-btn');
+
+  if (sentence.length === 0) {
+    display.innerHTML = '<span style="color:var(--text-3); font-style:italic;">Tap tokens above to build a sentence...</span>';
+    predictBtn.disabled = true;
+    return;
+  }
+
+  display.innerHTML = sentence.map((tok, i) => {
+    if (tok === '___') {
+      return '<span class="masked">___</span>';
+    }
+    return '<span class="tok">' + tok + '</span>';
+  }).join(' ');
+
+  predictBtn.disabled = !hasMask || sentence.length < 2;
+}
+
+// ── Neural Network Forward Pass ──
+function relu(arr) {
+  return arr.map(x => Math.max(0, x));
+}
+
+function softmax(arr) {
+  const maxVal = Math.max(...arr);
+  const exps = arr.map(x => Math.exp(x - maxVal));
+  const sum = exps.reduce((a, b) => a + b, 0);
+  return exps.map(x => x / sum);
+}
+
+function matmulVec(vec, mat) {
+  // vec: [m], mat: [m][n] -> [n]
+  const m = vec.length;
+  const n = mat[0].length;
+  const result = new Array(n).fill(0);
+  for (let j = 0; j < n; j++) {
+    let sum = 0;
+    for (let i = 0; i < m; i++) {
+      sum += vec[i] * mat[i][j];
+    }
+    result[j] = sum;
+  }
+  return result;
+}
+
+function addVec(a, b) {
+  return a.map((v, i) => v + b[i]);
+}
+
+function buildInputVector(tokenIds, maskPos) {
+  // tokenIds: array of ints, maskPos: index of masked position
+  const vec = new Array(INPUT_DIM).fill(0);
+
+  for (let i = 0; i < tokenIds.length; i++) {
+    const offset = i * DIMS_PER_POS;
+    if (i === maskPos) {
+      vec[offset + VOCAB_SIZE] = 1.0; // mask flag
+    } else {
+      vec[offset + tokenIds[i]] = 1.0; // one-hot token
+    }
+    vec[offset + VOCAB_SIZE + 1] = (i + 1) / MAX_SEQ_LEN; // position
+  }
+
+  vec[INPUT_DIM - 1] = tokenIds.length / MAX_SEQ_LEN; // sentence length
+
+  return vec;
+}
+
+function forwardPass(inputVec) {
+  // Layer 1: 61 -> 32
+  const z1 = addVec(matmulVec(inputVec, W1), b1);
+  const h1 = relu(z1);
+
+  // Layer 2: 32 -> 16
+  const z2 = addVec(matmulVec(h1, W2), b2);
+  const h2 = relu(z2);
+
+  // Output: 16 -> 8
+  const z3 = addVec(matmulVec(h2, W3), b3);
+  const probs = softmax(z3);
+
+  return probs;
+}
+
+function predict() {
+  if (!hasMask || sentence.length < 2) return;
+
+  // Convert sentence to token IDs
+  const maskPos = sentence.indexOf('___');
+  const tokenIds = sentence.map((tok, i) => {
+    if (tok === '___') return 0; // placeholder (masked)
+    return TOKEN2ID[tok];
+  });
+
+  // Run forward pass
+  const probs = forwardPass(buildInputVector(tokenIds, maskPos));
+
+  // Find best prediction
+  const bestIdx = probs.indexOf(Math.max(...probs));
+  const bestToken = VOCAB[bestIdx];
+
+  // Show probability bars
+  const container = document.getElementById('prob-container');
+  container.style.display = 'block';
+  const barsDiv = document.getElementById('prob-bars');
+  barsDiv.innerHTML = '';
+
+  // Sort by probability for display
+  const sorted = probs.map((p, i) => ({ idx: i, prob: p })).sort((a, b) => b.prob - a.prob);
+
+  sorted.forEach((item, rank) => {
+    const row = document.createElement('div');
+    row.className = 'prob-row';
+
+    const label = document.createElement('div');
+    label.className = 'prob-label';
+    label.style.color = item.idx === bestIdx ? 'var(--green)' : 'var(--text-2)';
+    label.textContent = VOCAB[item.idx];
+
+    const barBg = document.createElement('div');
+    barBg.className = 'prob-bar-bg';
+
+    const bar = document.createElement('div');
+    bar.className = 'prob-bar' + (item.idx === bestIdx ? ' winner' : '');
+    bar.style.background = COLORS[item.idx];
+    bar.style.width = '0%';
+
+    barBg.appendChild(bar);
+
+    const val = document.createElement('div');
+    val.className = 'prob-value';
+    val.textContent = (item.prob * 100).toFixed(1) + '%';
+
+    row.appendChild(label);
+    row.appendChild(barBg);
+    row.appendChild(val);
+    barsDiv.appendChild(row);
+
+    // Animate
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bar.style.width = (item.prob * 100) + '%';
+      });
+    });
+  });
+
+  // Show result
+  const resultDiv = document.getElementById('prediction-result');
+  resultDiv.textContent = 'Prediction: "' + bestToken + '" (' + (probs[bestIdx] * 100).toFixed(1) + '% confidence)';
+  resultDiv.className = 'prediction-result show correct';
+}
+
+// ── Chart.js config ──
+Chart.defaults.color = '#a1a1a6';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+
+// ── Comparison bar chart ──
+new Chart(document.getElementById('comparisonChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Random Baseline', 'Quantum (T-9)', 'Classical MLP'],
+    datasets: [{
+      label: 'Accuracy (%)',
+      data: [0, 50, 62.5],
+      backgroundColor: ['rgba(255,159,10,0.6)', 'rgba(191,90,242,0.6)', 'rgba(41,151,255,0.6)'],
+      borderColor: ['#ff9f0a', '#bf5af2', '#2997ff'],
+      borderWidth: 2,
+      borderRadius: 8,
+      barPercentage: 0.6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      title: {
+        display: true,
+        text: 'Accuracy Comparison (8 Test Cases)',
+        font: { size: 16, weight: 600 },
+        padding: { bottom: 24 }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            return ctx.parsed.y.toFixed(1) + '% accuracy';
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          callback: function(v) { return v + '%'; },
+          stepSize: 25
+        },
+        grid: { color: 'rgba(255,255,255,0.04)' }
+      },
+      x: {
+        grid: { display: false }
+      }
+    }
+  }
+});
+
+// ── Fade-in observer ──
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); });
+}, { threshold: 0.15 });
+document.querySelectorAll('.fade').forEach(el => obs.observe(el));
+
+// Auto-load example on page load
+window.addEventListener('load', () => {
+  loadExample();
+});
+</script>
+
+</body>
+</html>
