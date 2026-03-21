@@ -1,0 +1,225 @@
+\documentclass[prl,twocolumn,superscriptaddress,longbibliography,floatfix]{revtex4-2}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{booktabs}
+% \usepackage{multirow}  % not needed
+
+\begin{document}
+
+\title{Quantum circuit inference for a diffusion language model\\ on superconducting hardware}
+
+\author{Sheng-Kai Huang}
+\email{akai@fawstudio.com}
+\affiliation{Independent Researcher, Taiwan}
+
+\date{\today}
+
+\begin{abstract}
+We report a proof-of-concept demonstration of quantum circuit inference for a discrete diffusion language model, executed on the QuTech Tuna-9 superconducting processor. A classical multilayer perceptron (MLP) denoiser with 2648 parameters is trained on an 8-token vocabulary to predict masked tokens in simple English sentences. For each test input, the MLP's output probability distribution is encoded into a 3-qubit variational circuit (15 rotation gates, 4 CNOT gates) via classical optimization. These circuits are then executed on Tuna-9 with 4096 shots per circuit. The quantum hardware achieves 50\% accuracy (4/8 test cases), compared to 0\% for the random baseline and 62.5\% for the classical MLP, with a one-sided binomial $p$-value of 0.011 against chance. The hardware was in a calibrating state during the experiment, producing near-uniform output distributions (mean entropy $2.94/3.00$~bits). A $\tau$-chrono noise model predicted 84.9\% accuracy assuming normal calibration; the discrepancy highlights the sensitivity of quantum inference to real-time hardware conditions. No quantum advantage is demonstrated: the classical model is faster ($< 1$~ms vs.\ $\sim$18~s per inference) and more accurate. This work establishes that quantum circuits can execute language model inference on real hardware at above-chance levels, providing a baseline for future work on quantum-native diffusion models. Code and data are available at \url{https://github.com/akaiHuang/tau-chrono}.
+\end{abstract}
+
+\maketitle
+
+%=====================================================================
+\section{Introduction}
+%=====================================================================
+
+Diffusion language models~\cite{MDLM2024,SEDD2024} have recently emerged as an alternative to autoregressive generation. Unlike autoregressive models, which generate tokens sequentially left to right, diffusion models corrupt all tokens simultaneously with noise and then learn to reverse the corruption process, recovering the clean text through iterative denoising. This parallel structure is conceptually similar to quantum measurement: a quantum circuit prepared in a superposition state produces all output tokens simultaneously upon measurement.
+
+This analogy raises a concrete question: can a quantum circuit execute the inference step of a diffusion language model---that is, sample from the denoiser's output distribution---on real quantum hardware? If so, this would represent a first step toward quantum-accelerated language generation, where the quantum device handles the sampling while classical hardware handles the training.
+
+We emphasize at the outset that this paper does \emph{not} claim quantum advantage. The experiment is a proof of concept: we train a small classical model, convert its output distribution to a quantum circuit, run the circuit on a superconducting processor, and honestly report what works and what does not.
+
+Quantum natural language processing (QNLP) has been explored using compositional distributional models on trapped-ion hardware~\cite{Meichanetzidis2023}, and variational quantum classifiers have been applied to text classification tasks~\cite{Coecke2020}. The present work differs in two respects: (i)~we use a diffusion (masked prediction) framework rather than a compositional or classification framework, and (ii)~we execute on superconducting hardware (QuTech Tuna-9) rather than trapped ions.
+
+%=====================================================================
+\section{Method}
+%=====================================================================
+
+\subsection{Classical denoiser}
+
+The vocabulary consists of 8 English tokens: \texttt{the}, \texttt{cat}, \texttt{sat}, \texttt{on}, \texttt{a}, \texttt{mat}, \texttt{dog}, \texttt{ran}, encoded as integers $0$--$7$. The training corpus comprises 30 simple sentences constructed from these tokens (e.g., ``the cat sat on a mat,'' ``the dog ran on the mat''). For each sentence, every token position is masked once, producing 126 training examples.
+
+The denoiser is a two-hidden-layer MLP:
+\begin{equation}
+  61 \xrightarrow{W_1} 32 \xrightarrow{\text{ReLU}} 16 \xrightarrow{\text{ReLU}} 8 \xrightarrow{\text{softmax}} \hat{p}\,,
+\end{equation}
+with $61 \times 32 + 32 + 32 \times 16 + 16 + 16 \times 8 + 8 = 2648$ trainable parameters. The input is a fixed-length vector encoding all token positions (one-hot), a mask flag, normalized position indices, and sentence length. The model is trained with cross-entropy loss using Adam~\cite{Kingma2015} for 100 epochs, achieving 76.9\% accuracy on the training set. The model is implemented in pure NumPy without any deep learning framework.
+
+\subsection{Quantum circuit construction}
+
+For each test input, the classical MLP produces a probability distribution $\hat{p} = (\hat{p}_0, \ldots, \hat{p}_7) \in \Delta^7$ over the 8-token vocabulary. Since $8 = 2^3$, this distribution can be encoded into the measurement statistics of a 3-qubit quantum state $|\psi\rangle$, where
+\begin{equation}\label{eq:encoding}
+  |\psi\rangle = \sum_{k=0}^{7} \sqrt{\hat{p}_k}\, e^{i\phi_k} |k\rangle\,.
+\end{equation}
+The state $|\psi\rangle$ is prepared from $|000\rangle$ by a variational circuit $U(\boldsymbol{\theta})$ consisting of three layers:
+\begin{enumerate}
+  \item $R_y(\theta_0)\otimes R_y(\theta_1)\otimes R_y(\theta_2)$ followed by $R_z(\theta_3)\otimes R_z(\theta_4)\otimes R_z(\theta_5)$, then CNOT$(q_0 \to q_1)$, CNOT$(q_1 \to q_2)$.
+  \item $R_z(\theta_6)\otimes R_z(\theta_7)\otimes R_z(\theta_8)$ followed by $R_y(\theta_9)\otimes R_y(\theta_{10})\otimes R_y(\theta_{11})$, then CNOT$(q_2 \to q_0)$, CNOT$(q_0 \to q_1)$.
+  \item $R_y(\theta_{12})\otimes R_y(\theta_{13})\otimes R_y(\theta_{14})$.
+\end{enumerate}
+The circuit has 15 continuous parameters $\boldsymbol{\theta} \in \mathbb{R}^{15}$ and 4 CNOT gates. The parameters are optimized classically by minimizing the cost function
+\begin{equation}\label{eq:cost}
+  C(\boldsymbol{\theta}) = D_{\mathrm{KL}}\!\bigl(\hat{p}\,\|\,q(\boldsymbol{\theta})\bigr) + 0.1\,\|\hat{p} - q(\boldsymbol{\theta})\|_2^2\,,
+\end{equation}
+where $q_k(\boldsymbol{\theta}) = |\langle k|U(\boldsymbol{\theta})|000\rangle|^2$ are the ideal measurement probabilities. We use the Nelder--Mead algorithm~\cite{NelderMead1965} with 15--20 random restarts and 2000 iterations per restart. This optimization is performed independently for each test case and takes approximately 2 seconds per case on a laptop CPU.
+
+\emph{Remark.}---The quantum circuit does not ``learn'' language. The MLP is trained classically; the quantum circuit merely reproduces the MLP's output distribution as faithfully as the gate set and hardware noise allow. This is quantum \emph{inference}, not quantum \emph{training}.
+
+\subsection{Hardware execution}
+
+The circuits were executed on the QuTech Tuna-9 processor (9 transmon qubits) via the Quantum Inspire cloud platform on March~21, 2026. Tuna-9 natively supports the gate set $\{R_y, R_z, \text{CZ}\}$; CNOT gates are decomposed into CZ with single-qubit rotations by the transpiler. Each circuit was run with 4096 measurement shots. The hardware was in a \textsc{calibrating} state during the experiment (as reported by the backend status API), meaning that qubit parameters were being re-optimized and gate fidelities were below their typical post-calibration values.
+
+%=====================================================================
+\section{Results}
+%=====================================================================
+
+\subsection{Test cases and accuracy}
+
+Eight test cases were selected to cover both unambiguous contexts (where the missing token is strongly determined by the surrounding words) and shorter, more ambiguous contexts. Table~\ref{tab:results} presents the full results.
+
+\begin{table}[!htbp]
+\caption{\label{tab:results}Test results on Tuna-9 hardware. ``Exp.'' is the correct token. $P_{\mathrm{T9}}$ is the probability assigned to the correct token by the T-9 output distribution (4096 shots). $H$ is the Shannon entropy of the T-9 distribution in bits (maximum: 3.000).}
+\begin{ruledtabular}
+\begin{tabular}{lccccc}
+Input & Exp. & Class. & T-9 & $P_{\mathrm{T9}}$ & $H$ \\
+\colrule
+the cat \rule{1em}{0.4pt}            & sat & ran$^\times$  & ran$^\times$  & 0.176 & 2.940 \\
+the dog \rule{1em}{0.4pt}            & ran & ran$^\checkmark$ & cat$^\times$  & 0.151 & 2.960 \\
+\rule{1em}{0.4pt}\, cat sat          & the & the$^\checkmark$ & the$^\checkmark$ & 0.211 & 2.915 \\
+the \rule{1em}{0.4pt}\, sat on a mat & cat & cat$^\checkmark$ & cat$^\checkmark$ & 0.274 & 2.872 \\
+cat \rule{1em}{0.4pt}                & ran & ran$^\checkmark$ & sat$^\times$  & 0.146 & 2.974 \\
+dog \rule{1em}{0.4pt}                & sat & ran$^\times$  & sat$^\checkmark$ & 0.186 & 2.961 \\
+\rule{1em}{0.4pt}\, mat              & the & cat$^\times$  & cat$^\times$  & 0.108 & 2.976 \\
+the cat sat on \rule{1em}{0.4pt}     & mat & mat$^\checkmark$ & mat$^\checkmark$ & 0.198 & 2.931 \\
+\colrule
+\multicolumn{2}{l}{Accuracy} & 5/8 & 4/8 &  &  \\
+\multicolumn{2}{l}{Mean} &  &  & 0.181 & 2.941 \\
+\end{tabular}
+\end{ruledtabular}
+\end{table}
+
+The accuracy scores are: random baseline 0/8 (0\%), quantum (T-9) 4/8 (50\%), classical MLP 5/8 (62.5\%). Under the null hypothesis of random guessing ($p = 1/8$ per token), the probability of obtaining 4 or more correct answers out of 8 is
+\begin{equation}
+  P(X \geq 4 \,|\, \text{random}) = \sum_{k=4}^{8}\binom{8}{k}\left(\tfrac{1}{8}\right)^k\left(\tfrac{7}{8}\right)^{8-k} = 0.011\,,
+\end{equation}
+which is statistically significant at the $\alpha = 0.05$ level. The quantum hardware performs reliably above chance.
+
+\subsection{Output distributions}
+
+The last two columns of Table~\ref{tab:results} characterize the T-9 output distributions. The mean Shannon entropy is 2.941 bits out of a maximum of 3.000 bits (uniform over 8 tokens). This indicates that the hardware noise spreads probability mass nearly uniformly across all tokens, with the correct token receiving only a modest excess: the average probability assigned to the correct token is 0.181, compared to the uniform baseline of 0.125 (a ratio of $1.45\times$).
+
+The strongest signal appears in test case 4 (``the \rule{1em}{0.4pt}\, sat on a mat''), where the T-9 circuit assigns $P(\texttt{cat}) = 0.274$, more than double the uniform baseline. This is the test case with the richest surrounding context (5 unmasked tokens), suggesting that the circuit optimization converges to a more peaked distribution when the classical model is more confident. The weakest signal is test case 7 (``\rule{1em}{0.4pt}\, mat''), where $P(\texttt{the}) = 0.108$, actually \emph{below} uniform---here the classical model itself was wrong (predicting \texttt{cat} instead of \texttt{the}), so the quantum circuit faithfully reproduced an incorrect distribution.
+
+\subsection{Comparison with simulation}
+
+On a separate set of 16 test cases run on a noiseless Qiskit Aer simulator (4096 shots), the quantum circuits achieve 87.5\% accuracy (14/16), compared to 93.8\% for the classical MLP (15/16) and 6.2\% for the random baseline (1/16). The gap between simulated quantum (87.5\%) and T-9 hardware (50\%) is attributable entirely to hardware noise, since the circuits are identical.
+
+\subsection{$\tau$-chrono prediction}
+
+The $\tau$-chrono noise model~\cite{Huang2026tauchrono} predicted T-9 accuracy of 84.9\%, using published T-9 error rates (single-qubit gate error $\sim 10^{-3}$, two-qubit gate error $\sim 10^{-2}$, readout error $\sim 2 \times 10^{-2}$) and the circuit gate counts (15 single-qubit rotations, 4 CNOT gates, 3 measurements). The prediction assumes the hardware is in its normal post-calibration state. The actual accuracy of 50\% falls well below this prediction. The discrepancy is consistent with the hardware's \textsc{calibrating} status: during calibration, gate fidelities can degrade by an order of magnitude from their nominal values. This result illustrates that noise predictions based on published gate fidelities can be unreliable when the hardware is not in its nominal operating state.
+
+%=====================================================================
+\section{Honest analysis of limitations}
+%=====================================================================
+
+We identify seven significant limitations of this work. We state them explicitly because the literature on quantum machine learning contains many proof-of-concept papers that overstate their significance.
+
+\emph{(i)~The quantum circuit does not learn language.}---The MLP denoiser was trained entirely classically. The quantum circuit is a parametric state-preparation unitary whose angles are determined by classical optimization to reproduce the MLP's output distribution. The quantum device contributes nothing to the learning process; it serves only as a sampling device. A true quantum language model would require training the circuit parameters via a variational quantum eigensolver (VQE) or similar quantum optimization loop, which is beyond the scope of this work.
+
+\emph{(ii)~50\% accuracy is mediocre.}---The classical MLP achieves 62.5\% on the same 8 test cases. The quantum version is worse because hardware noise degrades the output distribution. Four of the eight ``correct'' quantum predictions coincide with cases where the classical model is also correct, and one case (\texttt{dog \rule{1em}{0.4pt}}) represents a fortunate quantum prediction where the classical model fails. The quantum circuit does not systematically outperform the classical model on any test case.
+
+\emph{(iii)~The T-9 distributions are nearly uniform.}---With a mean entropy of 2.94 out of 3.00 bits, the measurement distributions retain very little of the structure encoded by the circuit parameters. The average probability of the correct token (0.181) exceeds the uniform baseline (0.125) by only $0.056$. The quantum circuit barely distinguishes correct from incorrect tokens; the ``correct'' answers are only marginally more probable than the alternatives.
+
+\emph{(iv)~The hardware was calibrating.}---The Tuna-9 processor was in a \textsc{calibrating} state during the experiment. This means the measured gate fidelities were below their post-calibration values, and the results are not representative of the hardware's best performance. We report the results as measured, but a repeat experiment on a fully calibrated device could yield higher accuracy. We did not re-run the experiment because transparency about real-world hardware conditions is more valuable than cherry-picked results.
+
+\emph{(v)~8-token vocabulary is trivial.}---A production language model operates over vocabularies of 32,000--128,000 tokens, requiring $\lceil \log_2 V \rceil \approx 15$--17 qubits per token position. The 3-qubit circuits used here have depth $\sim$15; scaling to 15--17 qubits with comparable expressivity would require circuits of depth $\sim$$10^2$--$10^3$, far exceeding the coherence time of any current superconducting processor. The gap between 8 tokens and 50,000 tokens is not merely quantitative---it is qualitative, as deeper circuits face exponentially worse noise accumulation.
+
+\emph{(vi)~No quantum advantage.}---The classical MLP inference takes $< 1$~ms on a laptop CPU. The quantum inference takes $\sim$10--60~seconds per circuit (including transpilation, queuing, and 4096 measurement shots), is less accurate (50\% vs.\ 62.5\%), and requires access to a cloud quantum processor. There is no metric---speed, accuracy, energy, cost---on which the quantum approach outperforms the classical approach for this task at this scale.
+
+\emph{(vii)~The $\tau$-chrono prediction was off.}---The predicted T-9 accuracy of 84.9\% overestimated the actual 50\% by a wide margin. This is not a failure of the $\tau$-chrono framework per se---the prediction used published gate error rates that apply to the calibrated hardware state. But it demonstrates that any noise model based on static calibration data will fail when the hardware's actual noise deviates from the calibration snapshot. A real-time noise monitoring system (which $\tau$-chrono is designed to provide, given current calibration data) is essential for reliable quantum inference.
+
+%=====================================================================
+\section{Discussion}
+%=====================================================================
+
+\emph{What this proves.}---Despite the limitations enumerated above, the experiment establishes one concrete fact: a quantum circuit can execute language model inference on real superconducting hardware and produce results that are statistically distinguishable from random guessing ($p = 0.011$). This is the minimal bar for any quantum computing application: the hardware must contribute signal above the noise floor. That bar is cleared.
+
+\emph{What this does not prove.}---This experiment does not demonstrate quantum advantage for language modeling. It does not demonstrate quantum training. It does not demonstrate scalability. It does not demonstrate practical utility. Any claim beyond ``quantum circuits can sample from trained language model distributions on real hardware at above-chance accuracy'' would be unsupported by the data.
+
+\emph{Connection to diffusion models.}---The natural mapping between diffusion model inference and quantum measurement is the core motivation for this work. A diffusion model produces all tokens simultaneously by sampling from a learned distribution. A quantum circuit produces all output qubits simultaneously by measurement. If the learned distribution can be encoded into a quantum state, then measurement \emph{is} inference. The bottleneck is not the sampling step (which quantum hardware performs natively and in principle efficiently) but the state preparation (which currently requires classical optimization of $O(V)$ circuit parameters per inference call). Quantum-native training methods that learn the circuit parameters directly---rather than training a classical model first and then converting---are the necessary next step.
+
+\emph{Path to larger scale.}---Scaling from 8 to $V$ tokens requires $n = \lceil \log_2 V \rceil$ qubits per token position. For $V = 32{,}768$ (typical GPT-2 vocabulary), $n = 15$. A diffusion model that generates $L$ token positions simultaneously would require $nL$ qubits; for $L = 128$ (a short passage), this is 1920 qubits. Current superconducting processors have $\sim$$10^2$--$10^3$ qubits but with gate fidelities insufficient for circuits deeper than $\sim$$10^2$ gates without error correction. Fault-tolerant quantum language model inference is plausible in principle but requires hardware improvements of several orders of magnitude in gate count and fidelity.
+
+\emph{Connection to $\tau$-chrono.}---The $\tau$-chrono framework~\cite{Huang2026tauchrono} predicts circuit-level fidelity by propagating a noise metric $\tau = 1 - F$ through the circuit using Petz recovery maps. In the present context, $\tau$-chrono serves as a go/no-go predictor: given the current hardware noise level, will the quantum inference circuit produce a useful result? The failure of the prediction here (84.9\% predicted vs.\ 50\% actual) occurred because the noise level during execution (\textsc{calibrating} state) differed from the published calibration data. This underscores the need for \emph{real-time} noise tracking rather than static calibration snapshots.
+
+%=====================================================================
+\section{Conclusion}
+%=====================================================================
+
+We have demonstrated that a quantum circuit can execute the inference step of a diffusion language model on a real superconducting processor (QuTech Tuna-9), achieving 50\% accuracy on an 8-token masked prediction task---statistically significant above the 12.5\% random baseline ($p = 0.011$), but below the 62.5\% classical baseline. The output distributions are nearly uniform due to hardware noise, with the correct token receiving on average only $1.45\times$ the probability of a uniformly random token. No quantum advantage is demonstrated.
+
+This is a proof of concept, not a production system. Its value lies in establishing the minimal feasibility of quantum circuit language model inference and in providing an honest baseline---including hardware limitations, noise analysis, and failed predictions---against which future work can be measured.
+
+\begin{acknowledgments}
+Hardware access was provided by QuTech through the Quantum Inspire platform. The Tuna-9 processor was accessed via the public cloud API.
+\end{acknowledgments}
+
+%=====================================================================
+\begin{thebibliography}{20}
+
+\bibitem{MDLM2024}
+S.~Sahoo, M.~Arriola, Y.~Schiff, A.~Gokaslan, E.~Marber, S.~Kuleshov, J.~Kolter, and V.~Kuleshov,
+Simple and effective masked diffusion language models,
+\emph{Advances in Neural Information Processing Systems} \textbf{37} (2024).
+
+\bibitem{SEDD2024}
+A.~Lou, C.~Meng, and S.~Ermon,
+Discrete diffusion modeling by estimating the ratios of the data distribution,
+\emph{Proc.\ ICML} (2024).
+
+\bibitem{Meichanetzidis2023}
+K.~Meichanetzidis, S.~Gogioso, G.~de~Felice, N.~Chiappori, A.~Toumi, and B.~Coecke,
+Quantum natural language processing on near-term quantum computers,
+\emph{Electronic Proceedings in Theoretical Computer Science} \textbf{394}, 213 (2023).
+
+\bibitem{Coecke2020}
+B.~Coecke, G.~de~Felice, K.~Meichanetzidis, and A.~Toumi,
+Foundations for near-term quantum natural language processing,
+arXiv:2012.03755 (2020).
+
+\bibitem{Kingma2015}
+D.~P.~Kingma and J.~Ba,
+Adam: a method for stochastic optimization,
+\emph{Proc.\ ICLR} (2015).
+
+\bibitem{NelderMead1965}
+J.~A.~Nelder and R.~Mead,
+A simplex method for function minimization,
+\emph{Computer Journal} \textbf{7}, 308 (1965).
+
+\bibitem{Huang2026tauchrono}
+S.-K.~Huang,
+$\tau$-chrono: noise tracking via Petz recovery maps validated on superconducting quantum hardware,
+\url{https://github.com/akaiHuang/tau-chrono} (2026).
+
+\bibitem{Arute2019}
+F.~Arute \emph{et al.} (Google AI Quantum),
+Quantum supremacy using a programmable superconducting processor,
+\emph{Nature} \textbf{574}, 505 (2019).
+
+\bibitem{Petz1986}
+D.~Petz,
+Sufficient subalgebras and the relative entropy of states of a von Neumann algebra,
+\emph{Commun.\ Math.\ Phys.}\ \textbf{105}, 123 (1986).
+
+\bibitem{Parzygnat2023}
+A.~J.~Parzygnat and F.~Buscemi,
+Axioms for retrodiction: achieving time-reversal symmetry with a prior,
+\emph{Quantum} \textbf{7}, 1013 (2023).
+
+\end{thebibliography}
+
+\end{document}

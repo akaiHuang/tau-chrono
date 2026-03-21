@@ -1,0 +1,153 @@
+{
+  "backend": "ionq.simulator",
+  "timestamp": "2026-03-21T00:46:30.270845",
+  "ionq_error_rates": {
+    "h": 0.0003,
+    "x": 0.0003,
+    "cx": 0.005,
+    "measure": 0.003
+  },
+  "experiments": [
+    {
+      "type": "depth_scaling",
+      "depth": 2,
+      "n_layers": 1,
+      "n_gates": 4,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9894869251995662,
+      "f_naive": 0.9894560234134043,
+      "improvement_pct": 0.0031231086001402668,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "depth_scaling",
+      "depth": 4,
+      "n_layers": 2,
+      "n_gates": 8,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9791948998826573,
+      "f_naive": 0.9790232222690674,
+      "improvement_pct": 0.017535601779909083,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "depth_scaling",
+      "depth": 6,
+      "n_layers": 3,
+      "n_gates": 12,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9691192762297448,
+      "f_naive": 0.9687004243357289,
+      "improvement_pct": 0.043238537270501955,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "depth_scaling",
+      "depth": 8,
+      "n_layers": 4,
+      "n_gates": 16,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9592555041470873,
+      "f_naive": 0.9584864697421078,
+      "improvement_pct": 0.08023424735315862,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "depth_scaling",
+      "depth": 10,
+      "n_layers": 5,
+      "n_gates": 20,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.949599129211869,
+      "f_naive": 0.9483802108465783,
+      "improvement_pct": 0.12852633905156755,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "depth_scaling",
+      "depth": 15,
+      "n_layers": 7,
+      "n_gates": 28,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9308912194200163,
+      "f_naive": 0.9284862499592347,
+      "improvement_pct": 0.25902047131954886,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "depth_scaling",
+      "depth": 20,
+      "n_layers": 10,
+      "n_gates": 40,
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9042787539761394,
+      "f_naive": 0.8994250243254003,
+      "improvement_pct": 0.5396480550871511,
+      "should_run": true,
+      "counts": {
+        "00": 100
+      }
+    },
+    {
+      "type": "bernstein_vazirani",
+      "hidden_string": "101",
+      "n_rep": 1,
+      "expected": "101",
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9877276769155915,
+      "f_naive": 0.9876766045553708,
+      "counts": {
+        "101": 100
+      }
+    },
+    {
+      "type": "bernstein_vazirani",
+      "hidden_string": "101",
+      "n_rep": 3,
+      "expected": "101",
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9685565863720175,
+      "f_naive": 0.9681193784210503,
+      "counts": {
+        "101": 100
+      }
+    },
+    {
+      "type": "bernstein_vazirani",
+      "hidden_string": "101",
+      "n_rep": 5,
+      "expected": "101",
+      "p_correct": 1.0,
+      "f_tauchrono": 0.9501390530490504,
+      "f_naive": 0.948949409707129,
+      "counts": {
+        "101": 100
+      }
+    }
+  ],
+  "qec_prediction": {
+    "enable": false,
+    "reason": "Physical error rate 0.5% is near threshold 3.0%. QEC overhead outweighs correction benefit at distance 3.",
+    "predicted_ler_without": 0.005,
+    "predicted_ler_with": 0.007455192125520817,
+    "threshold_error_rate": 0.03
+  }
+}
