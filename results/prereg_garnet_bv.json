@@ -22,52 +22,52 @@
   "predictions": [
     {
       "depth": 5,
-      "f_naive": 0.8798548607194179,
-      "f_tauchrono": 0.8866706753532675,
-      "n_gates_1q": 28,
+      "f_naive": 0.8564166234478425,
+      "f_tauchrono": 0.8663343147132458,
+      "n_gates_1q": 55,
       "n_gates_2q": 10,
-      "n_gates_total": 38,
-      "saturation_bonus_pct": 0.7746521543651675
+      "n_gates_total": 65,
+      "saturation_bonus_pct": 1.158045160949322
     },
     {
       "depth": 15,
-      "f_naive": 0.6921206761915637,
-      "f_tauchrono": 0.7387745740076277,
-      "n_gates_1q": 68,
+      "f_naive": 0.6472679423535663,
+      "f_tauchrono": 0.7088158696402668,
+      "n_gates_1q": 135,
       "n_gates_2q": 30,
-      "n_gates_total": 98,
-      "saturation_bonus_pct": 6.7407172507516915
+      "n_gates_total": 165,
+      "saturation_bonus_pct": 9.508879284659558
     },
     {
       "depth": 30,
-      "f_naive": 0.48287864796301383,
-      "f_tauchrono": 0.615866621001486,
-      "n_gates_1q": 128,
+      "f_naive": 0.4252874940478909,
+      "f_tauchrono": 0.5898653668000772,
+      "n_gates_1q": 255,
       "n_gates_2q": 60,
-      "n_gates_total": 188,
-      "saturation_bonus_pct": 27.54066132339288
+      "n_gates_total": 315,
+      "saturation_bonus_pct": 38.69802781777859
     },
     {
       "depth": 50,
-      "f_naive": 0.2987992985925845,
-      "f_tauchrono": 0.5441826769897096,
-      "n_gates_1q": 208,
+      "f_naive": 0.2429297095456412,
+      "f_tauchrono": 0.5291987427210321,
+      "n_gates_1q": 415,
       "n_gates_2q": 100,
-      "n_gates_total": 308,
-      "saturation_bonus_pct": 82.12314404784047
+      "n_gates_total": 515,
+      "saturation_bonus_pct": 117.84027310237539
     },
     {
       "depth": 75,
-      "f_naive": 0.1639859114930724,
-      "f_tauchrono": 0.5132394252161219,
-      "n_gates_1q": 308,
+      "f_naive": 0.12063634050739558,
+      "f_tauchrono": 0.507162735292182,
+      "n_gates_1q": 615,
       "n_gates_2q": 150,
-      "n_gates_total": 458,
-      "saturation_bonus_pct": 212.97775555420424
+      "n_gates_total": 765,
+      "saturation_bonus_pct": 320.4062666018044
     }
   ],
-  "preregistration_hash": "096a9ccbb1451782",
-  "preregistration_timestamp": 1775571923.520789,
+  "preregistration_hash": "e7c4b7d813c86241",
+  "preregistration_timestamp": 1775572326.2064729,
   "secret": "101",
   "shots": 2048,
   "success_criterion": {
@@ -75,5 +75,5 @@
     "primary": "At depth >= 30: tau_error < 0.5 * naive_error",
     "secondary": "tau-chrono wins at least 3/5 depth points"
   },
-  "timestamp_readable": "2026-04-07T14:25:23Z"
+  "timestamp_readable": "2026-04-07T14:32:06Z"
 }
