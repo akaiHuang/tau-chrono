@@ -1,0 +1,244 @@
+{
+  "backend": "Tuna-9",
+  "shots": 4096,
+  "timestamp": "2026-03-21T09:25:29.925928",
+  "test_cases": [
+    {
+      "description": "the cat ___",
+      "expected": "sat",
+      "classical_pred": "ran",
+      "quantum_pred": "ran",
+      "classical_correct": false,
+      "quantum_correct": false,
+      "quantum_distribution": {
+        "the": 0.108154296875,
+        "cat": 0.1435546875,
+        "sat": 0.176025390625,
+        "on": 0.10888671875,
+        "a": 0.0751953125,
+        "mat": 0.123046875,
+        "dog": 0.0859375,
+        "ran": 0.17919921875
+      },
+      "raw_counts": {
+        "000": 443,
+        "001": 308,
+        "010": 721,
+        "011": 352,
+        "100": 588,
+        "101": 504,
+        "110": 446,
+        "111": 734
+      },
+      "elapsed_s": 62.4
+    },
+    {
+      "description": "the dog ___",
+      "expected": "ran",
+      "classical_pred": "ran",
+      "quantum_pred": "cat",
+      "classical_correct": true,
+      "quantum_correct": false,
+      "quantum_distribution": {
+        "the": 0.138427734375,
+        "cat": 0.1552734375,
+        "sat": 0.1328125,
+        "on": 0.074462890625,
+        "a": 0.13330078125,
+        "mat": 0.1318359375,
+        "dog": 0.082763671875,
+        "ran": 0.151123046875
+      },
+      "raw_counts": {
+        "000": 567,
+        "001": 546,
+        "010": 544,
+        "011": 339,
+        "100": 636,
+        "101": 540,
+        "110": 305,
+        "111": 619
+      },
+      "elapsed_s": 10.9
+    },
+    {
+      "description": "___ cat sat",
+      "expected": "the",
+      "classical_pred": "the",
+      "quantum_pred": "the",
+      "classical_correct": true,
+      "quantum_correct": true,
+      "quantum_distribution": {
+        "the": 0.210693359375,
+        "cat": 0.089111328125,
+        "sat": 0.092041015625,
+        "on": 0.10791015625,
+        "a": 0.166259765625,
+        "mat": 0.111328125,
+        "dog": 0.150634765625,
+        "ran": 0.072021484375
+      },
+      "raw_counts": {
+        "000": 863,
+        "001": 681,
+        "010": 377,
+        "011": 617,
+        "100": 365,
+        "101": 456,
+        "110": 442,
+        "111": 295
+      },
+      "elapsed_s": 10.8
+    },
+    {
+      "description": "the ___ sat on a mat",
+      "expected": "cat",
+      "classical_pred": "cat",
+      "quantum_pred": "cat",
+      "classical_correct": true,
+      "quantum_correct": true,
+      "quantum_distribution": {
+        "the": 0.124755859375,
+        "cat": 0.2744140625,
+        "sat": 0.1298828125,
+        "on": 0.103759765625,
+        "a": 0.09375,
+        "mat": 0.089599609375,
+        "dog": 0.099609375,
+        "ran": 0.084228515625
+      },
+      "raw_counts": {
+        "000": 511,
+        "001": 384,
+        "010": 532,
+        "011": 408,
+        "100": 1124,
+        "101": 367,
+        "110": 425,
+        "111": 345
+      },
+      "elapsed_s": 10.9
+    },
+    {
+      "description": "cat ___",
+      "expected": "ran",
+      "classical_pred": "ran",
+      "quantum_pred": "sat",
+      "classical_correct": true,
+      "quantum_correct": false,
+      "quantum_distribution": {
+        "the": 0.082763671875,
+        "cat": 0.1103515625,
+        "sat": 0.162841796875,
+        "on": 0.112548828125,
+        "a": 0.144775390625,
+        "mat": 0.117919921875,
+        "dog": 0.123046875,
+        "ran": 0.145751953125
+      },
+      "raw_counts": {
+        "000": 339,
+        "001": 593,
+        "010": 667,
+        "011": 504,
+        "100": 452,
+        "101": 483,
+        "110": 461,
+        "111": 597
+      },
+      "elapsed_s": 12.3
+    },
+    {
+      "description": "dog ___",
+      "expected": "sat",
+      "classical_pred": "ran",
+      "quantum_pred": "sat",
+      "classical_correct": false,
+      "quantum_correct": true,
+      "quantum_distribution": {
+        "the": 0.130859375,
+        "cat": 0.10888671875,
+        "sat": 0.185546875,
+        "on": 0.123779296875,
+        "a": 0.078857421875,
+        "mat": 0.1103515625,
+        "dog": 0.115234375,
+        "ran": 0.146484375
+      },
+      "raw_counts": {
+        "000": 536,
+        "001": 323,
+        "010": 760,
+        "011": 472,
+        "100": 446,
+        "101": 452,
+        "110": 507,
+        "111": 600
+      },
+      "elapsed_s": 12.0
+    },
+    {
+      "description": "___ mat",
+      "expected": "the",
+      "classical_pred": "cat",
+      "quantum_pred": "cat",
+      "classical_correct": false,
+      "quantum_correct": false,
+      "quantum_distribution": {
+        "the": 0.10791015625,
+        "cat": 0.180908203125,
+        "sat": 0.103759765625,
+        "on": 0.13330078125,
+        "a": 0.1328125,
+        "mat": 0.11572265625,
+        "dog": 0.119873046875,
+        "ran": 0.105712890625
+      },
+      "raw_counts": {
+        "000": 442,
+        "001": 544,
+        "010": 425,
+        "011": 491,
+        "100": 741,
+        "101": 474,
+        "110": 546,
+        "111": 433
+      },
+      "elapsed_s": 11.1
+    },
+    {
+      "description": "the cat sat on ___",
+      "expected": "mat",
+      "classical_pred": "mat",
+      "quantum_pred": "mat",
+      "classical_correct": true,
+      "quantum_correct": true,
+      "quantum_distribution": {
+        "the": 0.106689453125,
+        "cat": 0.093994140625,
+        "sat": 0.160888671875,
+        "on": 0.086669921875,
+        "a": 0.154541015625,
+        "mat": 0.197509765625,
+        "dog": 0.12109375,
+        "ran": 0.07861328125
+      },
+      "raw_counts": {
+        "000": 437,
+        "001": 633,
+        "010": 659,
+        "011": 496,
+        "100": 385,
+        "101": 809,
+        "110": 355,
+        "111": 322
+      },
+      "elapsed_s": 10.9
+    }
+  ],
+  "summary": {
+    "random_accuracy": 0.0,
+    "quantum_accuracy": 0.5,
+    "classical_accuracy": 0.625
+  }
+}

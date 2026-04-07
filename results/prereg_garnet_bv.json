@@ -1,0 +1,79 @@
+{
+  "ancilla_qubit": "QB4",
+  "backend": "Garnet",
+  "data_qubits": [
+    "QB5",
+    "QB1",
+    "QB9"
+  ],
+  "depths": [
+    5,
+    15,
+    30,
+    50,
+    75
+  ],
+  "gate_errors_iqm": {
+    "cx": 0.01,
+    "cz": 0.01,
+    "h": 0.001,
+    "x": 0.001
+  },
+  "predictions": [
+    {
+      "depth": 5,
+      "f_naive": 0.8798548607194179,
+      "f_tauchrono": 0.8866706753532675,
+      "n_gates_1q": 28,
+      "n_gates_2q": 10,
+      "n_gates_total": 38,
+      "saturation_bonus_pct": 0.7746521543651675
+    },
+    {
+      "depth": 15,
+      "f_naive": 0.6921206761915637,
+      "f_tauchrono": 0.7387745740076277,
+      "n_gates_1q": 68,
+      "n_gates_2q": 30,
+      "n_gates_total": 98,
+      "saturation_bonus_pct": 6.7407172507516915
+    },
+    {
+      "depth": 30,
+      "f_naive": 0.48287864796301383,
+      "f_tauchrono": 0.615866621001486,
+      "n_gates_1q": 128,
+      "n_gates_2q": 60,
+      "n_gates_total": 188,
+      "saturation_bonus_pct": 27.54066132339288
+    },
+    {
+      "depth": 50,
+      "f_naive": 0.2987992985925845,
+      "f_tauchrono": 0.5441826769897096,
+      "n_gates_1q": 208,
+      "n_gates_2q": 100,
+      "n_gates_total": 308,
+      "saturation_bonus_pct": 82.12314404784047
+    },
+    {
+      "depth": 75,
+      "f_naive": 0.1639859114930724,
+      "f_tauchrono": 0.5132394252161219,
+      "n_gates_1q": 308,
+      "n_gates_2q": 150,
+      "n_gates_total": 458,
+      "saturation_bonus_pct": 212.97775555420424
+    }
+  ],
+  "preregistration_hash": "096a9ccbb1451782",
+  "preregistration_timestamp": 1775571923.520789,
+  "secret": "101",
+  "shots": 2048,
+  "success_criterion": {
+    "null_hypothesis": "f_tauchrono has zero prediction advantage over f_naive",
+    "primary": "At depth >= 30: tau_error < 0.5 * naive_error",
+    "secondary": "tau-chrono wins at least 3/5 depth points"
+  },
+  "timestamp_readable": "2026-04-07T14:25:23Z"
+}
