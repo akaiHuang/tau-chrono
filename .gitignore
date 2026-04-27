@@ -9,6 +9,7 @@ build/
 .eggs/
 *.egg
 .venv/
+.venv-iqm/
 venv/
 env/
 
@@ -49,6 +50,15 @@ Thumbs.db
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Secrets / credentials — never commit
+.env
+.env.*
+.env_*
+.iqm_env
+.*_env
+*.token
+secrets/
 
 # Data (keep PNGs and JSONs, ignore large intermediates)
 *.csv
