@@ -93,6 +93,95 @@ information-theoretic claims about the arrow of time. Without τ-chrono,
 Paper 1 is purely theoretical; with it, the τ framework becomes a tool
 that quantum-software developers can drop into their NISQ pipelines.
 
+## The original τ formula and what these experiments do (and don't) do for it
+
+Paper 1's central object is
+
+```
+τ(ρ, N | σ) := 1 − F(ρ, R̃_{σ,N}(N(ρ)))
+```
+
+where `F` is the Uhlmann fidelity, `N` is a quantum channel,
+`R̃_{σ,N}` is the Petz recovery map about reference state `σ`, and
+`τ` measures how much information about `ρ` is lost (irrecoverable)
+under `N`. The Petz uniqueness theorem (Parzygnat & Buscemi 2023) and
+the master inequality `−log F² ≤ I(A;E|B) ≤ Σ ≤ ΔD` are
+**mathematical theorems** — they are derivations from the postulates
+of quantum mechanics, not empirical hypotheses. **No hardware
+experiment can "prove" or "disprove" them; the most an experiment can
+do is validate the framework's *operational meaning* and *practical
+utility*.**
+
+With that scoping clear, here is what the τ-chrono experiments
+honestly contribute, and what they do not:
+
+### What the experiments **do** strengthen
+
+1. **Universality claim — validated on 4 backends.** The Petz
+   framework predicts that `F_anomaly` extracted via the anomalous
+   weak-value protocol should fit a *single universal form*
+   (`<Π₀>_{w,obs} = 1 − F_anomaly · <Π₁>_{w,theory}`) regardless of
+   the underlying noise channel (depolarising, amplitude-damping,
+   resonator-coupled, …). v2 confirms this on QuTech Tuna-9 (depol.),
+   IQM Garnet (amp-damp.), IQM Sirius (resonator), and IQM Emerald
+   (amp-damp.) — each within 1% statistical noise. This is non-trivial
+   empirical support for the framework's universality.
+
+2. **Operational measurability of τ — hardware proxy demonstrated.**
+   v2 measures the *coherence time* of the negative-probability
+   anomalous weak value on Tuna-9: **T_anomaly = 101 ± 10 ns bare,
+   ~500 ns under X-Y-X-Y dynamical decoupling.** This gives `τ` a
+   hardware-side handle (a measurable quantity in nanoseconds) — Paper
+   1's `τ` is no longer purely a formal symbol. To our knowledge, no
+   prior published characterisation of T_anomaly on superconducting
+   transmon hardware exists.
+
+3. **Incremental practical value over generic QEM — quantified at
+   1.7×.** On the H₂ accuracy push (Tuna-17 q2-q5, April 2026),
+   stripping out the τ-specific layer (per-Pauli (F, bias) ABR) and
+   running pure generic QEM (Symmetry PS + ZNE) on the same data
+   gives ~22 mHa. Adding the τ layer brings it to 13 mHa. So **τ
+   contributes 1.7× incremental precision on top of the best
+   generic-QEM baseline** — a small but *measured* effect.
+
+4. **Anomalous (negative-probability) weak values at 10.1–14.9σ
+   significance** across 4 transmon backends. Predicted by Aharonov-
+   Vaidman 1988 and consistent with the time-symmetric (TSVF /
+   retrodictive) framework that Paper 1 formalises. Not unique to our
+   formulation, but every observation strengthens the operational
+   case for retrodiction-based reasoning on real hardware.
+
+### What the experiments **do not** strengthen
+
+1. The mathematical theorems in Paper 1 (Petz uniqueness, monotonicity
+   under DPI, the master inequality chain). These are derived; an
+   experiment cannot strengthen a derivation.
+
+2. The broader Σ = 2 ln Q programme (gravitational refractive index,
+   Khronon dark matter, etc.). Those require separate observational
+   tests at astrophysical / cosmological scales.
+
+3. **Chemical accuracy (1 kcal/mol) on Tuna-class hardware**. The
+   13 mHa H₂ result is hardware-bounded by ~98–99% two-qubit gate
+   fidelity. No NISQ-class EM technique we know of closes the
+   remaining 8× gap on this hardware tier; closing it requires
+   IBM Heron or Google Willow class chips, not a stronger formula.
+
+### Concrete numerical anchors that future theory work can target
+
+| Quantity | Measured value | What a stronger τ-framework should explain |
+|---|---|---|
+| F_anomaly on Tuna-9 (depol.) | 0.793 ± 0.011 | Per-channel value from first-principles `Σ = 2 ln Q` decomposition |
+| F_anomaly best pair on Tuna-17 | 0.799 (q2–q5) | Why the best pair coincides numerically with Tuna-9 average |
+| T_anomaly bare / DD on Tuna-9 | 101 ns / ~500 ns | Closed-form decay envelope from gate-level `R̃_{σ,N}` |
+| 24-pair F_anomaly spread on Tuna-17 | 0.825 (range −0.025 → +0.799) | Non-uniformity model derived from per-coupler Hamiltonian |
+| τ-incremental mitigation gain | 1.7× over PS+ZNE baseline | Variance-reduction proof for per-Pauli (F, bias) vs. global F |
+
+The thesis: **Paper 1 gives the formula; τ-chrono gives the formula
+hardware-side numbers it must one day predict from first principles.**
+The current experiments do not derive those predictions — they pin
+down *targets* for the next round of theoretical work.
+
 ## Quickstart
 
 ```bash
