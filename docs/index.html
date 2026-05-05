@@ -594,13 +594,47 @@ footer a:hover { color: var(--text); }
   </div>
 </section>
 
-<!-- Section 3: Why It Works -->
+<!-- Section 3: Why It Works (expanded) -->
 <section class="sec" id="why" style="background:#050505;">
   <div class="sec-inner fade">
-    <h2 class="sec-title">Why It Works</h2>
+    <h2 class="sec-title">Why It's Called τ — From Theory to Tool</h2>
+
+    <h3 style="color:var(--blue); margin-top:8px;">1. Where τ comes from</h3>
     <div class="explain-box">
-      <p>Independent noise models assume each gate fails independently. In reality, noise saturates &mdash; a qubit that&rsquo;s already noisy can&rsquo;t get much noisier.</p>
-      <p style="margin-top:16px;">The Petz recovery map (Petz, 1986) provides the mathematically correct way to track this saturation through the circuit. &tau;-chrono uses Bayesian retrodiction to update noise estimates conditioned on what has already happened, giving predictions that are closer to actual measured fidelity at every tested depth.</p>
+      <p>τ-chrono is the <b>hardware-realisation companion</b> to the foundations paper <a href="https://github.com/akaiHuang/petz-recovery-unification" style="color:var(--blue);">"The Arrow of Time from Petz Recovery"</a> (Huang 2025; Zenodo DOI: 10.5281/zenodo.18897853, "Paper 1" in the Σ = 2 ln Q series).</p>
+      <p style="margin-top:16px;">Paper 1 establishes that the Petz recovery map (Petz 1986) is the unique Bayesian retrodiction functor on quantum channels (Parzygnat &amp; Buscemi 2023), and that the temporal-asymmetry parameter</p>
+      <p style="text-align:center; font-size:1.2em; color:var(--blue); margin:18px 0;"><b>τ = 1 − F(ρ, R̃<sub>σ,N</sub>(N(ρ)))</b></p>
+      <p>is the precise quantitative measure of how far a quantum channel <i>N</i> is from being losslessly reversible. τ-chrono adopts this <b>τ</b> as its name and as the central observable: every fidelity, every gate, every circuit is tracked through the lens of "how much retrodiction has failed".</p>
+    </div>
+
+    <h3 style="color:var(--green); margin-top:36px;">2. v1 → v2 — what changed and why</h3>
+    <div style="overflow-x:auto;">
+    <table style="width:100%; max-width:920px; margin:16px auto; border-collapse:collapse; color:var(--text);">
+      <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:8px;">Capability</th><th style="text-align:center; padding:8px;">v1 (2025)</th><th style="text-align:center; padding:8px;">v2 (April 2026)</th></tr></thead>
+      <tbody style="font-size:0.95em;">
+        <tr><td style="padding:6px;">Single-scalar fidelity tracker per circuit</td><td style="text-align:center;">✓</td><td style="text-align:center;">✓</td></tr>
+        <tr><td style="padding:6px;">Per-Pauli (F, bias) calibration</td><td style="text-align:center; color:#888;">—</td><td style="text-align:center; color:var(--green);"><b>✓</b></td></tr>
+        <tr><td style="padding:6px;"><b>Anomaly-Based Recovery (ABR)</b> for chemistry</td><td style="text-align:center; color:#888;">—</td><td style="text-align:center; color:var(--green);"><b>✓ 3–10×</b></td></tr>
+        <tr><td style="padding:6px;">Cross-platform single-formula validation</td><td style="text-align:center; color:#888;">Tuna-9 only</td><td style="text-align:center; color:var(--green);"><b>4 backends</b></td></tr>
+        <tr><td style="padding:6px;">T<sub>anomaly</sub> hardware coherence</td><td style="text-align:center; color:#888;">—</td><td style="text-align:center; color:var(--green);"><b>101 ns / DD ~500 ns</b></td></tr>
+        <tr><td style="padding:6px;">Tuna-17 hardware non-uniformity probe</td><td style="text-align:center; color:#888;">—</td><td style="text-align:center; color:var(--green);"><b>✓ (24 pairs, April)</b></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="max-width:920px; margin:16px auto;">v1 was a <b>noise-prediction tool</b>: given a circuit, predict whether it will succeed. The headline result was 26.4% more accurate fidelity prediction than the standard independent-gate model on Tuna-9.</p>
+    <p style="max-width:920px; margin:16px auto;">v2 is a <b>noise-mitigation tool</b>: take a real run that already happened and post-process it to recover the noise-free observable. The shift is from "predict whether the circuit works" to "fix the data so the circuit's answer is closer to what the noiseless circuit would have given". This is what enables the 3–10× error reduction on chemistry VQE.</p>
+
+    <h3 style="color:var(--purple); margin-top:36px;">3. How v2 actually works — anomalous weak values as a single-parameter probe</h3>
+    <div class="explain-box">
+      <p>The mechanism behind v2 is the <b>anomalous weak value</b> (Aharonov–Vaidman 1988): a quantum measurement that uses <b>both</b> a past pre-selected state and a future post-selected state to extract a single-parameter signature of the channel acting between them. On a noiseless system, the anomalous weak value of the Π₀ projector is the famous <b>negative-probability</b> result that has been central to time-symmetric quantum mechanics since the 1980s.</p>
+      <p style="margin-top:16px;">τ-chrono v2 adopts this protocol as a <b>noise probe</b>. We measured it on four superconducting backends in April 2026 and found that one universal formula fits all of them within statistical noise:</p>
+      <p style="text-align:center; font-size:1.15em; color:var(--purple); margin:18px 0;"><code>&lt;Π₀&gt;<sub>w,observed</sub> = 1 − F<sub>anomaly</sub> · &lt;Π₁&gt;<sub>w,theory</sub>(g)</code></p>
+      <p>The single parameter <b>F<sub>anomaly</sub></b> captures the entire process fidelity of the channel that connects the pre-selection to the post-selection — without needing a noise-model assumption per platform.</p>
+      <div class="fig-card" style="max-width:760px; margin:24px auto;">
+        <img src="img/fig_v2_anomaly_gsweep.png" alt="Anomalous weak value g-sweep on Tuna-9" loading="lazy" style="width:100%;">
+        <p class="fig-caption">The anomalous-weak-value g-sweep used to extract F<sub>anomaly</sub>. The pointer follows a single-parameter curve across the entire weak-coupling range; the slope is the channel's process fidelity. <b>One probe circuit, one parameter, no noise model — that is the v2 calibration primitive.</b></p>
+      </div>
+      <p>Once F<sub>anomaly</sub> is extracted, every Pauli expectation in a downstream chemistry VQE can be corrected as <code>&lt;P&gt;<sub>corrected</sub> = (&lt;P&gt;<sub>observed</sub> − bias<sub>P</sub>) / F<sub>P</sub></code>. <b>This is why v2 calibration costs 4–8× fewer circuits than Mitiq ZNE / PEC: instead of running the target circuit at multiple noise-amplification levels, we extract the channel fidelity from a separate single-parameter probe.</b></p>
     </div>
   </div>
 </section>
