@@ -42,6 +42,57 @@ data** (4/8 calibration circuits completed before IQM monthly credit
 limit), which is consistent with cross-platform F_anomaly trends.
 Full Garnet H2 + ABR v2 demonstration awaits monthly credit refresh.
 
+## Origin & Continuity — How tau-chrono extends Paper 1
+
+τ-chrono is the **hardware-realisation companion** to
+[*The Arrow of Time from Petz Recovery*](https://github.com/akaiHuang/petz-recovery-unification)
+(Huang 2025; Zenodo DOI: 10.5281/zenodo.18897853, "Paper 1" in the
+Σ = 2 ln Q series). The chain of reasoning that takes us from a
+foundations-of-quantum-mechanics paper to a NISQ engineering tool
+is direct, but worth making explicit:
+
+1. **Paper 1 establishes** that the Petz recovery map is the unique
+   Bayesian retrodiction functor (Parzygnat & Buscemi 2023), and that
+   the temporal-asymmetry parameter
+   `τ = 1 − F(ρ, R̃_{σ,N}(N(ρ)))` is the precise quantitative measure
+   of how far a quantum channel `N` is from being losslessly
+   reversible.
+
+2. **A direct corollary** is that fidelity prediction on real,
+   noisy quantum hardware is *retrodiction-bounded*. Independent-gate
+   noise models (the universal NISQ baseline) implicitly assume each
+   gate's error is an independent Bernoulli trial, but Petz recovery
+   tracks the *saturation* of noise — once a qubit is highly mixed,
+   subsequent gates degrade it less than the multiplicative model
+   predicts. Paper 1's `τ` framework encodes this saturation
+   automatically.
+
+3. **τ-chrono operationalises** this insight as an engineering tool:
+   - **v1** propagates a single-qubit Bayesian reference state σ
+     alongside the signal, giving a per-circuit "should I run this?"
+     prediction more accurate than the multiplicative baseline
+     (validated on QuTech Tuna-9: 26.4% average improvement at all
+     tested depths, peaking at 48.3% at depth 50).
+   - **v2** (April 2026) extends to per-Pauli `(F, bias)` calibration
+     and an anomalous-weak-value-based F estimator that avoids the
+     choice-of-σ problem, giving 3–10× error reduction on chemistry
+     VQE (H₂ / LiH / BeH₂ / H₂O) and a vendor-neutral cross-platform
+     fidelity benchmark across four transmon backends.
+
+4. **What tau-chrono is not**: it is not a separate theory. Every
+   prediction it makes is an immediate consequence of Paper 1's
+   master inequality chain `−log F² ≤ I(A;E|B) ≤ Σ ≤ ΔD`, applied
+   to gate-level noise models on superconducting transmon hardware.
+   The novelty is engineering: **how to extract and apply the τ
+   framework with measurements that are cheap to acquire on real
+   devices**.
+
+In the Σ = 2 ln Q paper series, τ-chrono occupies the role of
+"experimental verification + engineering deliverable" for Paper 1's
+information-theoretic claims about the arrow of time. Without τ-chrono,
+Paper 1 is purely theoretical; with it, the τ framework becomes a tool
+that quantum-software developers can drop into their NISQ pipelines.
+
 ## Quickstart
 
 ```bash
@@ -166,13 +217,66 @@ using a *per-platform* F_anomaly value (not the same F across
 backends). The universality is in the formula's structure, not in a
 single global F.
 
-#### Hardware non-uniformity within a single chip (Tuna-17)
+#### Hardware non-uniformity within a single chip (Tuna-17, full 24-pair sweep)
 
 ![Tuna-17 pair shopping](results/fig_v2_t17_pair_shopping.png)
 
-Spread Δ F_anomaly = 0.22 across three qubit pairs **on the same chip**.
-Pair selection alone changes effective fidelity by ~30%. No vendor
-publishes this data; F_anomaly probe extracts it in 30 seconds.
+**Update (April 2026):** the v2 paper figure used three qubit pairs
+(ΔF = 0.22). A subsequent full sweep of all 24 coupler-connected pairs
+on Tuna-17 (4096 shots/pair, single g = 0.30, classical-register
+bitstring parser) shows that the chip is **substantially more
+non-uniform than the 3-pair number suggested**:
+
+| | Tuna-17 (24 pairs) |
+|---|---:|
+| F_anomaly mean | 0.550 |
+| F_anomaly std | 0.185 |
+| Range | [−0.025, 0.799] |
+| **Spread (max − min)** | **0.825** |
+| Best pair | q2–q5 (F = 0.799 ≈ Tuna-9 baseline 0.793) |
+| Dead pairs | q11–q14 (F = −0.025), q11–q13 (F = 0.145) |
+
+For chemistry-style ansatze the chip-level mean F = 0.55 governs
+multi-qubit performance; the best individual pair (q2–q5) only matches
+Tuna-9's average pair, not exceeds it. The takeaway: **on Tuna-17,
+"more qubits" buys you more *reach* (bigger molecules, longer
+ansatze), not more *accuracy* per pair.** Raw data:
+[`data/iqm_4platform_validation/awv_t17_pairsweep_tuna17_20260428_143803.json`](data/iqm_4platform_validation/awv_t17_pairsweep_tuna17_20260428_143803.json).
+
+#### QEC compatibility on Tuna-17 (distance-3 repetition code, April 2026)
+
+A diagnostic to check whether Tuna-17 supports the mid-circuit
+measurement + reset cycle needed by repeated quantum error correction.
+Distance-3 repetition code (3 data + 2 ancilla, on chain
+q0–q1–q4–q2–q5 selected from the F-shopping sweep), |0⟩_L memory
+experiment with R ∈ {1, 2, 3, 5, 10} stabilizer rounds, 4096 shots
+each, decoded offline with stim + PyMatching:
+
+| R rounds | depth | non-trivial shots | PyMatching p_L |
+|---:|---:|---:|---:|
+| 1 | 6 | 233 / 4096 (5.7%) | **0 / 4096** |
+| 2 | 12 | 287 / 4096 (7.0%) | **0 / 4096** |
+| 3 | 18 | 475 / 4096 (11.6%) | **0 / 4096** |
+| 5 | 30 | 860 / 4096 (21.0%) | **0 / 4096** |
+| 10 | 60 | 1577 / 4096 (38.5%) | **0 / 4096** |
+
+Upper bound on logical error rate over 5 × 4096 = 20480 logical
+measurements: `p_logical < 2.4 × 10⁻⁴`. Most physical errors
+concentrate in the syndrome bits (q1, q2 ancillas), which the d = 3
+code correctly classifies as not affecting the logical qubit. The data
+qubits stay clean enough for the code to suppress every observed
+error pattern in this sample.
+
+This is **a reproduction**, not a discovery: distance-3 surface code
+on 17-qubit superconducting hardware was demonstrated by
+[Krinner et al., *Nature* 605, 669 (2022)](https://www.nature.com/articles/s41586-022-04566-8),
+and QuTech themselves have published d = 3, 5, 7 repetition-code
+results on the same chip class. The point of this experiment is to
+verify that the τ-chrono toolkit can drive QuTech Quantum Inspire's
+mid-circuit measurement + reset workflow end-to-end (qiskit
+construction → stim circuit annotation → PyMatching decoding).
+Raw data:
+[`data/iqm_4platform_validation/repcode_d3_tuna17_20260428_173951.json`](data/iqm_4platform_validation/repcode_d3_tuna17_20260428_173951.json).
 
 ### NISQ Chemistry Vertical (Tuna-9, ABR v2)
 
@@ -191,6 +295,55 @@ the classical reference energy. **BeH₂ hits chemical accuracy at 3/5
 R points; LiH and H₂O hit it at 1 R point each**. H₂ at 19 mHa absolute
 remains an order of magnitude above the chemical accuracy threshold even
 after v2 mitigation.
+
+### H₂ accuracy push on Tuna-17 best pair (April 2026 follow-up)
+
+A drill-down on H₂ — the entry in the v2 sprint table that was
+furthest from chemical accuracy (0/7). Two diagnostic findings:
+
+1. **The ansatz is not the bottleneck.** With the corrected 1-parameter
+   parity-encoded H₂ ansatz `X(q0); CX; Ry(θ); CX` and the standard
+   sto-3g coefficients (O'Malley et al. PRX 6, 031007 (2016)), a
+   Statevector check reaches FCI = −1.857275 Ha **exactly** at
+   θ ≈ 2.918 rad (gap < 1 µHa). Noiseless QX emulator with 8192 shots
+   is at the shot-noise floor (∼ 2 mHa).
+
+2. **Tuna-17 raw VQE on the best pair (q2-q5) lands at 84 mHa**. The
+   structure of the residual is informative: the dominant single-Pauli
+   deficit is on `<ZI>` (q5 readout/T1 worse than q2), giving an
+   **asymmetric** noise channel that simple readout calibration alone
+   does not fix.
+
+Stacking three mitigation layers on top of the same raw data — the
+two non-τ layers (symmetry post-selection and ZNE) are well-known
+generic QEM techniques; the τ-specific contribution is the per-Pauli
+(F, bias) calibration block:
+
+| Pipeline stage | Source | \|err\| (mHa) | Cumulative reduction |
+|---|---|---:|---:|
+| Raw VQE on q2-q5 (no mitigation) | — | 84 | 1× |
+| + Symmetry post-selection (drop \|00⟩, \|11⟩) | Bonet-Monroig 2018 (generic QEM) | 38 | 2.2× |
+| + per-Pauli (F, bias) ABR calibration | **τ-chrono v2** | 31 | 2.7× |
+| + Zero-Noise Extrapolation (CNOT folding 1×/3×/5×, linear extrap) | Temme/Mitiq (generic QEM) | **13** | **6.4×** |
+| Chemical accuracy target (1 kcal/mol) | — | 1.6 | — |
+
+**Honest decomposition of τ's marginal contribution.** Removing the
+τ-specific ABR layer and running just the two generic-QEM layers
+(symmetry PS + ZNE) on the same data gives ∼ 22 mHa. Adding the τ
+ABR layer brings it to 13 mHa — i.e. **τ contributes a 1.7×
+incremental precision improvement on top of the best generic-QEM
+baseline**, plus the calibration efficiency advantage (single weak-value
+probe vs. 30+ noise-amplified circuits for ZNE alone).
+
+**Why we stopped at 13 mHa rather than pushing further.** The
+remaining gap to chemical accuracy is dominated by the residual
+coherent error in the 2-CX H₂ ansatz on a chip whose two-qubit gate
+fidelity is in the 98–99% range. Tuna-17's per-pair fidelity is 5–10×
+worse than IBM Heron / Google Willow class hardware; chemical
+accuracy on H₂ at this hardware tier is bounded by physics, not by
+the mitigation algorithm. We document the boundary here rather than
+dressing it up. Raw data:
+[`data/iqm_4platform_validation/h2_zne_tuna17_20260505_034357.json`](data/iqm_4platform_validation/h2_zne_tuna17_20260505_034357.json).
 
 ### ABR Mitigation Boundary
 
@@ -309,9 +462,19 @@ Adjust noise type, error rate, and circuit depth interactively.
    v2 ABR works on readout-dominated, shallow-ansatz workloads (e.g.,
    chemistry VQE, ≤ 4 CZ depth). For deep circuits (QAOA p ≥ 2, deep
    VQC) the gain drops to < 10%. Use Mitiq ZNE/PEC for those regimes.
-2. **Hardware coverage.** Tested on Tuna-9 (full sprint), Tuna-17
-   (single point + pair shopping), IQM Garnet/Sirius/Emerald (single
-   point each). IBM, Google, IonQ, AWS Braket: unverified.
+2. **Hardware coverage.** Tested on Tuna-9 (full v2 sprint), Tuna-17
+   (24-pair F-shopping + d=3 rep-code memory + H₂ accuracy push on
+   q2-q5), IQM Garnet/Sirius/Emerald (single point each). IBM, Google,
+   IonQ, AWS Braket: unverified.
+2a. **Chemical accuracy on Tuna-class hardware is hardware-bounded.**
+   Even with the full PS + ABR + ZNE pipeline, H₂ on Tuna-17 q2-q5
+   bottoms out around 13 mHa — about 8× above the 1.6 mHa chemical
+   accuracy target. The dominant residual is the coherent two-qubit
+   gate error on a 98–99%-fidelity chip; no NISQ-class EM technique
+   we know of can close this gap on this hardware tier. The honest
+   τ pitch is **1.7× extra precision over best generic-QEM baseline +
+   4–8× cheaper calibration**, not "we hit chemical accuracy on
+   Tuna".
 3. **Anomaly coherence is fragile.** `T_anomaly = 101 ns bare` is
    approximately two orders of magnitude shorter than typical transmon
    `T_2*` (~5–50 µs depending on device and dressing). Long past–future
