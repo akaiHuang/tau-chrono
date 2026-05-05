@@ -3,23 +3,41 @@
 [![Tests](https://github.com/akaiHuang/tau-chrono/actions/workflows/test.yml/badge.svg)](https://github.com/akaiHuang/tau-chrono/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**τ-chrono: noise tracking for quantum circuits via Petz recovery maps.**
+**τ-chrono: a low-overhead NISQ hardware calibration and circuit
+pre-screening toolkit, using Petz-style retrodictive noise metrics
+and post-selected weak-value anomaly probes.**
 
-> **Can you see information from 10 ns into the future?**
-> Yes — and we measured how long it survives. On a 9-qubit transmon
-> (QuTech Tuna-9) we observe a 10σ-significant *negative-probability*
-> weak value, the operational signature of a future boundary condition
-> sculpting the present (Aharonov–Vaidman 1988). The signal's hardware
-> coherence time is **101 ± 10 ns bare**, extending to **~500 ns under
-> X-Y-X-Y dynamical decoupling** — to our knowledge, the first
-> quantitative T_anomaly measurement on the QuTech Tuna-9 platform.
-> No published prior characterisation of this quantity on
-> superconducting transmon hardware was found in our literature search,
-> but we make no broader "first" claim.
+> **What this is.** A practical engineering toolkit for noisy quantum
+> hardware: predict whether a circuit is worth running, choose the
+> better qubit pair, mitigate shallow chemistry circuits at low
+> calibration cost. Built on the Petz recovery framework
+> (`τ = 1 − F(ρ, R̃_{σ,N}(N(ρ)))`) and validated end-to-end on real
+> superconducting hardware (QuTech Tuna-9 / Tuna-17, IQM Garnet /
+> Sirius / Emerald).
+>
+> **Headline hardware result.** On the QuTech Tuna-9 platform we
+> measured the **coherence time of the post-selected anomalous
+> weak-value signal**: T_anomaly = **101 ± 10 ns bare**, extending to
+> **~500 ns under X-Y-X-Y dynamical decoupling**. The 10σ-significant
+> negative-probability weak value (Aharonov–Vaidman 1988) is real and
+> reproducible across four transmon backends. **This is a hardware
+> coherence measurement of a post-selected weak-measurement protocol,
+> not a retrocausal communication claim** — see "Honest Limitations"
+> for what the protocol does and does not allow.
 
 **Author:** Sheng-Kai Huang (akai@fawstudio.com)
 **Website:** [tau-chrono.pages.dev](https://tau-chrono.pages.dev)
 **Hardware results (April 2026):** see [RESULTS_2026-04.md](./RESULTS_2026-04.md)
+
+> **Package status.** The published PyPI distribution is `tau-chrono
+> 0.1.0` (alpha, March 2026) which contains the v1 σ-propagation
+> tracker only. The v2 capabilities documented below (per-Pauli ABR,
+> F_anomaly cross-platform validation, Tuna-17 sweeps, ZNE pipeline)
+> live in the `tau_chrono_v2/` and `experiments/` trees of this
+> repository and are reproducible from the raw JSON data, but **have
+> not yet been packaged into a v2 PyPI release**. Expect a v2 package
+> only after the head-to-head Mitiq comparison and stronger-baseline
+> benchmark are complete.
 
 ## What's new in v2 (April 2026)
 
@@ -493,11 +511,26 @@ Mitiq ZNE/PEC for those regimes.
 
 Real measured P_success values: 0.68 at n_rep=1, decreasing to 0.08 at n_rep=12.
 
-### H2 VQE
+### H2 VQE (v1, classically computed energies)
 
 ![H2 VQE results](results/fig_h2_vqe.png)
 
 τ-chrono tracking doubles usable ansatz depth (2 to 4). At depth 4: naive tau=0.60 (STOP), τ-chrono tau=0.49 (GO).
+
+> **What this v1 H₂ result IS and IS NOT.** The energies in this v1
+> figure are *classically computed from noise-model density matrices*
+> propagated by the τ-chrono v1 tracker — not direct VQE energies
+> read off Tuna-9 hardware. The v1 result therefore demonstrates that
+> the τ tracker keeps the predicted-fidelity high enough to *justify
+> running* a depth-4 ansatz that the naive multiplicative model would
+> reject. It is **not** a hardware ground-truth chemical-accuracy
+> claim.
+>
+> The v2 NISQ Chemistry Vertical (above) is a different experiment:
+> there, full VQE is run on Tuna-9 hardware end-to-end with 4096
+> shots, and the energies are post-processed by ABR v2. The two H₂
+> results live in different layers of the stack and should not be
+> conflated.
 
 ### Experiment A: Cost Savings
 
@@ -603,6 +636,37 @@ Adjust noise type, error rate, and circuit depth interactively.
    on hardware.
 5. **No fault-tolerant claims.** All work is NISQ-era. Logical-qubit
    results require hardware that does not yet exist.
+6. **No retrocausal communication.** The negative-probability
+   anomalous weak value is a real, reproducible feature of
+   *post-selected* weak measurements (Aharonov-Vaidman 1988); it is
+   **not** a "see-into-the-future" channel. The protocol requires both
+   a pre-selection and a post-selection, and standard interpretation
+   is that the anomaly only appears in the conditioned ensemble
+   *retrieved after* the post-selection event happens. T_anomaly is
+   the *hardware coherence* of this protocol, not a retrocausal
+   signaling capacity.
+7. **v1 H₂ vs v2 H₂ are different experiments.** The v1 H₂ figure
+   (depth-4 viability claim) uses energies *classically computed from
+   noise-model density matrices* propagated by the v1 tracker. The
+   v2 NISQ Chemistry Vertical is full VQE on Tuna-9 / Tuna-17 hardware
+   with 4096 shots and ABR v2 post-processing. Different layers of
+   the stack — do not conflate.
+8. **Baseline strength is "naive multiplicative", not best-of-breed.**
+   The 26.4% / 48.3% v1 improvements are over independent-gate
+   Bernoulli composition. We have **not** yet benchmarked against
+   randomized / cycle benchmarking, gate-set tomography, Qiskit Aer
+   calibrated noise model, or Mitiq ZNE/PEC head-to-head. Stronger-
+   baseline benchmarks are the right next sprint.
+9. **Cross-platform F_anomaly claim is "early empirical evidence",
+   not "established universality".** The 4-backend validation is a
+   single-point per platform; multi-day robustness and Garnet full
+   H₂ + ABR demonstration await monthly credit refresh.
+10. **g-sweep fit is borderline.** On Tuna-9 the F_anomaly extraction
+    gives χ² / dof = 3.03 against the consistency threshold of 3.0,
+    with per-g ratios scattered in [0.545, 0.797]. Interpret as "single
+    scaling factor across g is borderline-good on Tuna-9", not "perfect
+    universal collapse". Refining with a denser g-grid + more shots is
+    on the roadmap.
 
 ## Theoretical Foundation
 
