@@ -350,7 +350,7 @@ footer a:hover { color: var(--text); }
   <canvas id="cosmic-web" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"></canvas>
   <div style="position:relative; z-index:1;">
     <h1>τ-chrono</h1>
-    <p class="sub">Noise tracking for quantum circuits via Petz recovery maps.<br>26.4% more accurate on average. Wins at all 10 tested depths.</p>
+    <p class="sub">Noise tracking for quantum circuits via Petz recovery maps.<br>v2 chemistry vertical: 3–10× error reduction on H₂ / LiH / BeH₂ / H₂O.<br>Tuna-17 H₂ accuracy push (April 2026): <b>6.4× total error reduction</b> via PS + ABR + ZNE.</p>
     <a href="https://github.com/akaiHuang/tau-chrono" target="_blank" class="btn-hero">
       <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       View on GitHub
@@ -456,23 +456,23 @@ footer a:hover { color: var(--text); }
 <section class="sec" id="results" style="background:#050505;">
   <div class="sec-inner fade">
     <h2 class="sec-title">The Result</h2>
-    <p class="sec-sub">We applied the Petz recovery map to predict quantum circuit noise. Validated on QuTech Tuna-9 superconducting hardware:</p>
+    <p class="sec-sub">We applied the Petz recovery map to predict and mitigate quantum circuit noise. Validated on real superconducting hardware (QuTech Tuna-9 / Tuna-17, IQM Garnet / Sirius / Emerald):</p>
     <div class="result-grid">
       <div class="result-card">
-        <div class="result-num blue">48.3%</div>
-        <div class="result-label">More accurate noise prediction<br>at depth 50 (Tuna-9)</div>
+        <div class="result-num blue">10×</div>
+        <div class="result-label">Error reduction on BeH₂ / H₂O VQE<br>(v2 ABR, Tuna-9)</div>
       </div>
       <div class="result-card">
-        <div class="result-num green">26.4%</div>
-        <div class="result-label">Average improvement<br>across all tested depths</div>
+        <div class="result-num green">6.4×</div>
+        <div class="result-label">Tuna-17 H₂ stack: PS + ABR + ZNE<br>(84 → 13 mHa, April 2026)</div>
       </div>
       <div class="result-card">
-        <div class="result-num purple">10/10</div>
-        <div class="result-label">Depths where &tau;-chrono<br>beats independent model</div>
+        <div class="result-num purple">4</div>
+        <div class="result-label">Transmon backends validated<br>by single F<sub>anomaly</sub> formula</div>
       </div>
       <div class="result-card">
-        <div class="result-num orange">0</div>
-        <div class="result-label">Training circuits needed<br>~10 min from calibration data</div>
+        <div class="result-num orange">4–8×</div>
+        <div class="result-label">Cheaper calibration than<br>Mitiq ZNE / PEC</div>
       </div>
     </div>
   </div>
@@ -516,6 +516,37 @@ footer a:hover { color: var(--text); }
         <p class="fig-caption">Experiment B: 3-qubit entangling mirror circuit. &tau;-chrono extends usable depth from 20 to 50 gates (2.5x). Two circuits saved that naive rejected.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- Section 2c: April 2026 Update -->
+<section class="sec" id="apr2026">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">April 2026 Update — Tuna-17 Hardware Push</h2>
+    <p class="sec-sub">A drill-down on three follow-up experiments. Results documented honestly, including what we did <i>not</i> achieve and why.</p>
+
+    <h3 style="color:var(--blue); margin-top:24px;">1. Full 24-pair F<sub>anomaly</sub> sweep on Tuna-17</h3>
+    <p>The v2 paper figure used three pairs (Δ F<sub>anomaly</sub> = 0.22). A subsequent sweep of <b>all 24 coupler-connected pairs</b> shows the chip is far more non-uniform: spread = 0.825, mean = 0.55, std = 0.185. Best pair (q2-q5) F = 0.799 — about the same as Tuna-9's average pair, not better. Two pairs (q11-q14, q11-q13) are essentially dead.</p>
+    <p style="color:#888;">Takeaway: on Tuna-17, "more qubits" buys you more <i>reach</i> (bigger molecules), not more <i>accuracy</i> per pair.</p>
+
+    <h3 style="color:var(--green); margin-top:24px;">2. d=3 repetition code memory on Tuna-17 (Krinner-class reproduction)</h3>
+    <p>Distance-3 rep code on chain q0–q1–q4–q2–q5, |0⟩<sub>L</sub> memory experiment with R ∈ {1, 2, 3, 5, 10} stabilizer rounds, 4096 shots each, decoded offline with stim + PyMatching. Result: <b>0 / 4096 logical errors at every R</b> (p<sub>logical</sub> &lt; 2.4 × 10⁻⁴ across 20480 logical measurements). Most physical errors concentrate in syndrome bits and are correctly classified as not affecting the logical qubit.</p>
+    <p style="color:#888;">This <i>reproduces</i> Krinner et al. <i>Nature</i> 605 (2022) and prior QuTech rep-code work — it is not a discovery. The point is verifying that the τ-chrono toolkit drives Quantum Inspire's mid-circuit measurement workflow end-to-end.</p>
+
+    <h3 style="color:var(--purple); margin-top:24px;">3. H₂ accuracy push on Tuna-17 best pair (q2-q5)</h3>
+    <p>Stacking three mitigation layers — only one of which (the per-Pauli ABR block) is τ-specific:</p>
+    <table style="width:100%; border-collapse:collapse; margin-top:12px; color:var(--text);">
+      <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:6px;">Pipeline stage</th><th style="text-align:left; padding:6px;">Source</th><th style="text-align:right; padding:6px;">|err| (mHa)</th><th style="text-align:right; padding:6px;">Cumulative</th></tr></thead>
+      <tbody style="font-size:0.95em;">
+        <tr><td style="padding:6px;">Raw VQE on q2-q5</td><td>—</td><td style="text-align:right;">84</td><td style="text-align:right;">1×</td></tr>
+        <tr><td style="padding:6px;">+ Symmetry post-selection</td><td>Bonet-Monroig 2018</td><td style="text-align:right;">38</td><td style="text-align:right;">2.2×</td></tr>
+        <tr><td style="padding:6px;">+ per-Pauli (F, bias) <b>τ-ABR</b></td><td><b>τ-chrono v2</b></td><td style="text-align:right;">31</td><td style="text-align:right;">2.7×</td></tr>
+        <tr><td style="padding:6px;">+ Zero-Noise Extrapolation (CNOT folding 1×/3×/5×)</td><td>Temme / Mitiq</td><td style="text-align:right;"><b>13</b></td><td style="text-align:right;"><b>6.4×</b></td></tr>
+        <tr style="border-top:1px solid #333; color:#888;"><td style="padding:6px;">Chemical accuracy (1 kcal/mol)</td><td>—</td><td style="text-align:right;">1.6</td><td style="text-align:right;">target</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:16px;"><b>Honest decomposition.</b> Removing the τ-specific layer and running just generic-QEM (PS + ZNE) on the same data gives ~22 mHa. Adding τ brings it to 13 mHa — i.e. <b>τ contributes 1.7× incremental precision</b> on top of best generic-QEM, plus 4–8× cheaper calibration than Mitiq ZNE alone.</p>
+    <p style="color:#888;"><b>Why we stopped at 13 mHa.</b> The remaining gap to chemical accuracy is bounded by Tuna-17's 98–99% two-qubit gate fidelity. No NISQ-class EM technique closes this gap on this hardware tier — chemical accuracy on H₂ requires IBM Heron or Google Willow class hardware. The τ pitch is <i>"1.7× extra precision + 4–8× cheaper calibration"</i>, not <i>"we hit chemical accuracy on Tuna"</i>.</p>
   </div>
 </section>
 
@@ -565,10 +596,11 @@ footer a:hover { color: var(--text); }
     <h2 class="sec-title">Limitations</h2>
     <p class="sec-sub">We believe in honest reporting. Here is what this approach cannot do.</p>
     <ul class="limit-list">
-      <li><span class="limit-dot"></span>Tested on small, noisy hardware (QuTech Tuna-9, 5 qubits). Results on larger processors are unverified.</li>
-      <li><span class="limit-dot"></span>On low-noise hardware (Google Willow), improvement is only ~2.5%. The benefit scales with noise magnitude.</li>
-      <li><span class="limit-dot"></span>Not a replacement for quantum error correction or error mitigation. This is a noise prediction tool.</li>
-      <li><span class="limit-dot"></span>Improvement depends on the degree of noise correlation in the hardware. Independent noise yields no benefit.</li>
+      <li><span class="limit-dot"></span><b>Chemistry-vertical specialist, not universal NISQ tool.</b> v2 ABR works on readout-dominated, shallow-ansatz workloads (chemistry VQE, ≤ 4 CZ depth). For deep optimisation (QAOA p ≥ 2, deep VQC) gain drops to &lt; 10%; use Mitiq ZNE / PEC for those regimes.</li>
+      <li><span class="limit-dot"></span><b>Hardware coverage.</b> Tested on Tuna-9 (full v2 sprint), Tuna-17 (24-pair F-shopping + d=3 rep code + H₂ accuracy push on q2-q5), IQM Garnet / Sirius / Emerald (single point each). IBM, Google, IonQ, AWS Braket: unverified.</li>
+      <li><span class="limit-dot"></span><b>Chemical accuracy on Tuna-class hardware is hardware-bounded.</b> Even with the full PS + ABR + ZNE pipeline, H₂ on Tuna-17 q2-q5 bottoms out around 13 mHa — about 8× above the 1.6 mHa chemical accuracy target. Closing this gap requires IBM Heron / Google Willow class chips, not better algorithms.</li>
+      <li><span class="limit-dot"></span><b>Anomaly coherence is fragile.</b> T<sub>anomaly</sub> = 101 ns bare on Tuna-9, ~500 ns under X-Y-X-Y dynamical decoupling — about two orders of magnitude shorter than typical transmon T<sub>2*</sub>.</li>
+      <li><span class="limit-dot"></span><b>No fault-tolerant claims.</b> All work is NISQ-era. Logical-qubit results require hardware that does not yet exist.</li>
     </ul>
   </div>
 </section>

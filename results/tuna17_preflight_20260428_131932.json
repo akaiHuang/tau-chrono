@@ -1,0 +1,238 @@
+{
+  "timestamp": "20260428_131932",
+  "all_backends": [
+    {
+      "name": "QX emulator",
+      "num_qubits": 10,
+      "operational": null,
+      "pending_jobs": null,
+      "status_msg": null
+    },
+    {
+      "name": "Tuna-5",
+      "num_qubits": 5,
+      "operational": null,
+      "pending_jobs": null,
+      "status_msg": null
+    },
+    {
+      "name": "Ry emulator",
+      "num_qubits": 9,
+      "operational": null,
+      "pending_jobs": null,
+      "status_msg": null
+    },
+    {
+      "name": "Tuna-9",
+      "num_qubits": 9,
+      "operational": null,
+      "pending_jobs": null,
+      "status_msg": null
+    },
+    {
+      "name": "Tuna-17",
+      "num_qubits": 17,
+      "operational": null,
+      "pending_jobs": null,
+      "status_msg": null
+    }
+  ],
+  "selected_backend": {
+    "name": "Tuna-17",
+    "num_qubits": 17,
+    "coupling_map": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        1,
+        4
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        4,
+        7
+      ],
+      [
+        7,
+        4
+      ],
+      [
+        4,
+        8
+      ],
+      [
+        8,
+        4
+      ],
+      [
+        5,
+        2
+      ],
+      [
+        2,
+        5
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        8,
+        5
+      ],
+      [
+        5,
+        9
+      ],
+      [
+        9,
+        5
+      ],
+      [
+        6,
+        3
+      ],
+      [
+        3,
+        6
+      ],
+      [
+        6,
+        9
+      ],
+      [
+        9,
+        6
+      ],
+      [
+        10,
+        7
+      ],
+      [
+        7,
+        10
+      ],
+      [
+        10,
+        13
+      ],
+      [
+        13,
+        10
+      ],
+      [
+        11,
+        7
+      ],
+      [
+        7,
+        11
+      ],
+      [
+        11,
+        8
+      ],
+      [
+        8,
+        11
+      ],
+      [
+        11,
+        13
+      ],
+      [
+        13,
+        11
+      ],
+      [
+        11,
+        14
+      ],
+      [
+        14,
+        11
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        8,
+        12
+      ],
+      [
+        12,
+        9
+      ],
+      [
+        9,
+        12
+      ],
+      [
+        12,
+        14
+      ],
+      [
+        14,
+        12
+      ],
+      [
+        12,
+        15
+      ],
+      [
+        15,
+        12
+      ],
+      [
+        16,
+        14
+      ],
+      [
+        14,
+        16
+      ],
+      [
+        16,
+        15
+      ],
+      [
+        15,
+        16
+      ]
+    ]
+  }
+}
