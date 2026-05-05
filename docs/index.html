@@ -636,6 +636,25 @@ footer a:hover { color: var(--text); }
       </div>
       <p>Once F<sub>anomaly</sub> is extracted, every Pauli expectation in a downstream chemistry VQE can be corrected as <code>&lt;P&gt;<sub>corrected</sub> = (&lt;P&gt;<sub>observed</sub> − bias<sub>P</sub>) / F<sub>P</sub></code>. <b>This is why v2 calibration costs 4–8× fewer circuits than Mitiq ZNE / PEC: instead of running the target circuit at multiple noise-amplification levels, we extract the channel fidelity from a separate single-parameter probe.</b></p>
     </div>
+
+    <h3 style="color:var(--orange); margin-top:36px;">4. How tightly is each layer coupled to the original τ formula?</h3>
+    <p>v1 and v2 are <b>not equally tight</b> to <code>τ = 1 − F(ρ, R̃<sub>σ,N</sub>(N(ρ)))</code>. We state the connection strength honestly rather than gloss over it:</p>
+    <div style="overflow-x:auto;">
+    <table style="width:100%; max-width:960px; margin:16px auto; border-collapse:collapse; color:var(--text);">
+      <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:8px;">Component</th><th style="text-align:left; padding:8px;">Relation to the τ formula</th><th style="text-align:center; padding:8px;">Strength</th></tr></thead>
+      <tbody style="font-size:0.95em;">
+        <tr><td style="padding:8px;"><b>v1: σ-propagation tracker</b></td><td style="padding:8px;">Literal gate-by-gate Petz recovery on a Bayesian reference σ; the predicted F <i>is</i> the F in the formula.</td><td style="text-align:center;"><b style="color:var(--green);">tight</b></td></tr>
+        <tr><td style="padding:8px;"><b>v2: F<sub>anomaly</sub> estimator</b></td><td style="padding:8px;">Process-fidelity proxy from anomalous-weak-value g-sweep. Same limiting behaviour as F (= 1 iff channel reversible) but <b>not literally</b> the same number in the noisy regime. Trade-off: gives up literal Petz F to side-step the choice-of-σ problem on amp-damping channels (the IQM Garnet failure mode of v0.1).</td><td style="text-align:center; color:var(--orange);"><b>moderate</b></td></tr>
+        <tr><td style="padding:8px;"><b>v2: per-Pauli (F, bias) calibration</b></td><td style="padding:8px;">Linear-correction layer per Pauli. Extension of v1's single-scalar F to a per-observable picture, but calibration values come from reference-state measurements, not Petz updates.</td><td style="text-align:center; color:var(--orange);"><b>loose</b></td></tr>
+        <tr><td style="padding:8px;"><b>v2: Symmetry post-selection</b></td><td style="padding:8px;">Bonet-Monroig 2018; generic QEM. Not derived from τ.</td><td style="text-align:center; color:#666;">none</td></tr>
+        <tr><td style="padding:8px;"><b>v2: Zero-Noise Extrapolation</b></td><td style="padding:8px;">Temme / Mitiq; generic QEM. Not derived from τ.</td><td style="text-align:center; color:#666;">none</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="explain-box" style="margin-top:24px;">
+      <p><b>Plain reading.</b> v1 is the τ formula in NISQ engineering form. v2's ABR layer is the τ framework's <i>spirit</i> (retrodiction-based mitigation) made measurable on hardware where literal Petz σ-propagation breaks down. The other v2 layers (symmetry verification, ZNE) are best-of-breed generic QEM stacked on top because they help — they are <b>not τ-derived</b>.</p>
+      <p style="margin-top:16px;"><b>The honest v2 pitch.</b> τ-chrono v2 = the τ-framework primitive (F<sub>anomaly</sub>) + best generic QEM on top + a vendor-neutral cross-platform F estimator. The τ-specific layer wins 1.7× incremental precision and 4–8× cheaper calibration; the generic-QEM layers do most of the absolute error reduction.</p>
+    </div>
   </div>
 </section>
 

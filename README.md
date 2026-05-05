@@ -79,6 +79,34 @@ is direct, but worth making explicit:
      VQE (H₂ / LiH / BeH₂ / H₂O) and a vendor-neutral cross-platform
      fidelity benchmark across four transmon backends.
 
+### How tightly is each version coupled to the original τ formula?
+
+The connection strength is **not uniform** between v1 and v2 — and we
+want this stated honestly rather than glossed over:
+
+| Component | Connection to `τ = 1 − F(ρ, R̃_{σ,N}(N(ρ)))` | Strength |
+|---|---|:---:|
+| **v1: σ-propagation tracker** | Literal gate-by-gate application of the Petz recovery rule on a Bayesian reference state σ; the predicted F at the end of the circuit *is* the F in the formula, computed by repeated Petz updates. | **tight** |
+| **v2: F_anomaly estimator** | The single-parameter `F_anomaly` extracted from the anomalous-weak-value g-sweep is **not literally** the Uhlmann F in the formula. It is a process-fidelity proxy that has the same **limiting behaviour** (`F_anomaly = 1 ⇔ channel reversible ⇔ τ = 0`) but a different value in the noisy regime. v2 deliberately replaces σ-propagation with a weak-value primitive to **side-step the choice-of-σ problem** that v1 inherits from non-unital noise (the IQM Garnet failure mode of v0.1). | **moderate** (motivated by, not literally) |
+| **v2: per-Pauli (F, bias) calibration** | A linear-correction layer applied to individual Pauli observables. Conceptually an extension of v1's single-scalar F to a per-observable picture, but no longer derives the calibration values from a Petz update — they come from reference-state measurements. | **loose** (extension of the spirit, not the formula) |
+| **v2: Symmetry post-selection (Bonet-Monroig 2018)** | Generic QEM technique borrowed wholesale; not derived from the τ framework. | **none** |
+| **v2: Zero-Noise Extrapolation (Temme / Mitiq)** | Generic QEM technique borrowed wholesale; not derived from the τ framework. | **none** |
+
+**Plain reading**: v1 is the τ formula in NISQ engineering form. v2's
+ABR layer is the τ framework's *spirit* (retrodiction-based
+mitigation) made measurable on hardware that has non-unital noise
+where the literal Petz σ-propagation breaks down. The other v2 layers
+(symmetry verification, ZNE) are best-of-breed generic QEM that we
+stack on top because they help — they are not τ-derived.
+
+The honest summary of v2's pitch is therefore:
+
+> **τ-chrono v2 = the τ-framework primitive (F_anomaly) + best generic
+> QEM on top + a vendor-neutral cross-platform F estimator.**
+> The τ-specific layer is what wins us 1.7× incremental precision over
+> generic QEM and 4–8× cheaper calibration than Mitiq ZNE/PEC; the
+> generic-QEM layers do most of the absolute error reduction.
+
 4. **What tau-chrono is not**: it is not a separate theory. Every
    prediction it makes is an immediate consequence of Paper 1's
    master inequality chain `−log F² ≤ I(A;E|B) ≤ Σ ≤ ΔD`, applied
