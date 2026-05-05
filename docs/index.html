@@ -519,6 +519,50 @@ footer a:hover { color: var(--text); }
   </div>
 </section>
 
+<!-- Section 2b: v2 Chemistry Vertical (the main story) -->
+<section class="sec" id="chemistry" style="background:#050505;">
+  <div class="sec-inner fade">
+    <h2 class="sec-title">v2 Chemistry Vertical (April 2026)</h2>
+    <p class="sec-sub">τ-chrono v2 specialises in NISQ molecular VQE: 4 molecules, full dissociation curves, real superconducting hardware (QuTech Tuna-9, 9 transmon qubits, 4096 shots/circuit). The headline number is <b>3–10× error reduction</b> on the full ABR pipeline.</p>
+
+    <div class="fig-card" style="max-width:980px; margin:24px auto;">
+      <img src="img/fig_v2_chemistry_sprint.png" alt="Chemistry sprint dissociation curves" loading="lazy" style="width:100%;">
+      <p class="fig-caption">Full dissociation curves for H₂, LiH, BeH₂, H₂O on Tuna-9. Red ▲ = ABR v2; gray ◼ = unmitigated baseline; blue ● = classical FCI reference.</p>
+    </div>
+
+    <div style="overflow-x:auto;">
+    <table style="width:100%; max-width:960px; margin:16px auto; border-collapse:collapse; color:var(--text);">
+      <thead><tr style="border-bottom:1px solid #333;"><th style="text-align:left; padding:8px;">Molecule</th><th style="text-align:center; padding:8px;">qubits</th><th style="text-align:right; padding:8px;">Baseline mean error</th><th style="text-align:right; padding:8px;">ABR v2 mean error</th><th style="text-align:right; padding:8px;">Improvement</th><th style="text-align:center; padding:8px;">Chemical accuracy¹</th></tr></thead>
+      <tbody style="font-size:0.95em;">
+        <tr><td style="padding:6px;">H₂</td><td style="text-align:center;">2</td><td style="text-align:right;">57 mHa</td><td style="text-align:right;">19 mHa</td><td style="text-align:right;">3×</td><td style="text-align:center;">0/7</td></tr>
+        <tr><td style="padding:6px;">LiH</td><td style="text-align:center;">4</td><td style="text-align:right;">10.4 mHa</td><td style="text-align:right;"><b>2.6 mHa</b></td><td style="text-align:right;">4×</td><td style="text-align:center;"><b>1/5</b></td></tr>
+        <tr><td style="padding:6px;">BeH₂</td><td style="text-align:center;">6</td><td style="text-align:right;">28.5 mHa</td><td style="text-align:right;"><b>2.8 mHa</b></td><td style="text-align:right;"><b>10×</b></td><td style="text-align:center;"><b>3/5</b></td></tr>
+        <tr><td style="padding:6px;">H₂O</td><td style="text-align:center;">8</td><td style="text-align:right;">39.3 mHa</td><td style="text-align:right;"><b>3.7 mHa</b></td><td style="text-align:right;"><b>10.7×</b></td><td style="text-align:center;"><b>1/5</b></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="color:#888; font-size:0.9em; max-width:960px; margin:0 auto;">¹ Chemical accuracy = absolute error &lt; 1.6 mHa at a given R. <b>BeH₂ hits 3/5 R points; LiH and H₂O hit 1 R point each.</b> H₂ at 19 mHa remains an order of magnitude above the threshold — see "April 2026 Update" below for the q2-q5 push.</p>
+
+    <h3 style="color:var(--blue); margin-top:36px; text-align:center;">Cross-platform F<sub>anomaly</sub> validation (4 transmon backends)</h3>
+    <div class="fig-card" style="max-width:880px; margin:16px auto;">
+      <img src="img/fig_v2_cross_platform.png" alt="Cross-platform F_anomaly validation" loading="lazy" style="width:100%;">
+      <p class="fig-caption">Same single-parameter formula <code>&lt;Π₀&gt;<sub>w,obs</sub> = 1 − F<sub>anomaly</sub> · &lt;Π₁&gt;<sub>w,theory</sub></code> fits Tuna-9 (depolarizing), IQM Garnet/Emerald (amp-damping), IQM Sirius (resonator-coupled) — each within 1% statistical noise. 10.1–14.9σ negative weak values across all four.</p>
+    </div>
+
+    <h3 style="color:var(--green); margin-top:36px; text-align:center;">"Future-information" coherence on Tuna-9</h3>
+    <div class="fig-card" style="max-width:880px; margin:16px auto;">
+      <img src="img/fig_v2_anomaly_decay.png" alt="T_anomaly coherence decay" loading="lazy" style="width:100%;">
+      <p class="fig-caption">Anomalous-weak-value signal lifetime on Tuna-9: <b>T<sub>anomaly</sub> = 101 ± 10 ns bare</b>, extending to <b>~500 ns under X-Y-X-Y dynamical decoupling</b>. The signal is an operational TSVF retrodiction signature (Aharonov–Vaidman 1988) on real superconducting hardware.</p>
+    </div>
+
+    <h3 style="color:var(--purple); margin-top:36px; text-align:center;">ABR mitigation boundary (regime map)</h3>
+    <div class="fig-card" style="max-width:880px; margin:16px auto;">
+      <img src="img/fig_v2_abr_boundary.png" alt="ABR mitigation boundary" loading="lazy" style="width:100%;">
+      <p class="fig-caption">ABR v2 is a <b>chemistry-vertical specialist</b> — it dominates on readout-bounded shallow-ansatz workloads. For deep optimisation circuits (QAOA p ≥ 2, deep VQC), the gain drops below 10%; use Mitiq ZNE / PEC for those regimes.</p>
+    </div>
+  </div>
+</section>
+
 <!-- Section 2c: April 2026 Update -->
 <section class="sec" id="apr2026">
   <div class="sec-inner fade">
