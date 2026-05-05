@@ -350,7 +350,7 @@ footer a:hover { color: var(--text); }
   <canvas id="cosmic-web" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;"></canvas>
   <div style="position:relative; z-index:1;">
     <h1>τ-chrono</h1>
-    <p class="sub">A low-overhead NISQ hardware calibration and circuit pre-screening toolkit, using Petz-style retrodictive noise metrics and post-selected weak-value anomaly probes.<br><br><b>v2 chemistry vertical:</b> 3–10× error reduction on H₂ / LiH / BeH₂ / H₂O.<br><b>Tuna-17 H₂ accuracy push (April 2026):</b> 6.4× total error reduction via PS + ABR + ZNE.<br><b>T<sub>anomaly</sub> on Tuna-9:</b> 101 ± 10 ns bare / ~500 ns under DD — a hardware coherence measurement of a post-selected weak-measurement protocol, <i>not a retrocausal communication claim</i>.</p>
+    <p class="sub">A low-overhead NISQ hardware calibration and circuit pre-screening toolkit, using Petz-style retrodictive noise metrics and post-selected weak-value anomaly probes.<br><br><b>v2 chemistry vertical:</b> 3–10× error reduction on H₂ / LiH / BeH₂ / H₂O (vs unmitigated baseline).<br><b>τ marginal contribution (A/B-verified vs Mitiq library, May 2026):</b> 1.41× extra precision on top of Mitiq PS+ZNE on Tuna-17 q2-q5 H₂ (29.6 → 21.0 mHa).<br><b>T<sub>anomaly</sub> on Tuna-9:</b> 101 ± 10 ns bare / ~500 ns under DD — a hardware coherence measurement of a post-selected weak-measurement protocol, <i>not a retrocausal communication claim</i>.</p>
     <a href="https://github.com/akaiHuang/tau-chrono" target="_blank" class="btn-hero">
       <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
       View on GitHub
@@ -463,8 +463,8 @@ footer a:hover { color: var(--text); }
         <div class="result-label">Error reduction on BeH₂ / H₂O VQE<br>(v2 ABR, Tuna-9)</div>
       </div>
       <div class="result-card">
-        <div class="result-num green">6.4×</div>
-        <div class="result-label">Tuna-17 H₂ stack: PS + ABR + ZNE<br>(84 → 13 mHa, April 2026)</div>
+        <div class="result-num green">1.41×</div>
+        <div class="result-label">τ marginal precision over Mitiq PS+ZNE<br>(A/B verified May 2026, 29.6 → 21.0 mHa)</div>
       </div>
       <div class="result-card">
         <div class="result-num purple">4</div>
@@ -589,8 +589,9 @@ footer a:hover { color: var(--text); }
         <tr style="border-top:1px solid #333; color:#888;"><td style="padding:6px;">Chemical accuracy (1 kcal/mol)</td><td>—</td><td style="text-align:right;">1.6</td><td style="text-align:right;">target</td></tr>
       </tbody>
     </table>
-    <p style="margin-top:16px;"><b>Honest decomposition.</b> Removing the τ-specific layer and running just generic-QEM (PS + ZNE) on the same data gives ~22 mHa. Adding τ brings it to 13 mHa — i.e. <b>τ contributes 1.7× incremental precision</b> on top of best generic-QEM, plus 4–8× cheaper calibration than Mitiq ZNE alone.</p>
-    <p style="color:#888;"><b>Why we stopped at 13 mHa.</b> The remaining gap to chemical accuracy is bounded by Tuna-17's 98–99% two-qubit gate fidelity. No NISQ-class EM technique closes this gap on this hardware tier — chemical accuracy on H₂ requires IBM Heron or Google Willow class hardware. The τ pitch is <i>"1.7× extra precision + 4–8× cheaper calibration"</i>, not <i>"we hit chemical accuracy on Tuna"</i>.</p>
+    <p style="margin-top:16px;"><b>Honest decomposition (initial hand-rolled comparison).</b> Removing the τ-specific layer and running just generic-QEM (PS + ZNE) on the same data gave ~22 mHa. Adding τ brought it to 13 mHa — i.e. an apparent 1.7× τ contribution.</p>
+    <p style="margin-top:16px;"><b>May 2026 update — verified A/B against the Mitiq library.</b> A strict controlled experiment now substitutes the Mitiq library's own symmetry-verification PS and linear-ZNE for our hand-rolled versions: <b>A组</b> = Mitiq PS + Mitiq ZNE → 29.6 mHa; <b>B组</b> = Mitiq PS + τ-chrono ABR + Mitiq ZNE → 21.0 mHa. Both pipelines consume the same 6 hardware circuits; the only variable is whether τ's per-Pauli (F, bias) correction is applied. <b>τ contributes 1.41× incremental precision</b> in this rigorous A/B — somewhat smaller than the 1.7× initial number, and we use 1.41× as the verified figure going forward.</p>
+    <p style="color:#888;"><b>Why we stopped at 21 mHa.</b> The remaining gap to chemical accuracy is bounded by Tuna-17's 98–99% two-qubit gate fidelity. No NISQ-class EM technique closes this gap on this hardware tier — chemical accuracy on H₂ requires IBM Heron or Google Willow class hardware. The τ pitch is <i>"1.41× extra precision over Mitiq PS+ZNE + 4–8× cheaper calibration"</i>, not <i>"we hit chemical accuracy on Tuna"</i>.</p>
   </div>
 </section>
 
@@ -653,7 +654,7 @@ footer a:hover { color: var(--text); }
     </div>
     <div class="explain-box" style="margin-top:24px;">
       <p><b>Plain reading.</b> v1 is the τ formula in NISQ engineering form. v2's ABR layer is the τ framework's <i>spirit</i> (retrodiction-based mitigation) made measurable on hardware where literal Petz σ-propagation breaks down. The other v2 layers (symmetry verification, ZNE) are best-of-breed generic QEM stacked on top because they help — they are <b>not τ-derived</b>.</p>
-      <p style="margin-top:16px;"><b>The honest v2 pitch.</b> τ-chrono v2 = the τ-framework primitive (F<sub>anomaly</sub>) + best generic QEM on top + a vendor-neutral cross-platform F estimator. The τ-specific layer wins 1.7× incremental precision and 4–8× cheaper calibration; the generic-QEM layers do most of the absolute error reduction.</p>
+      <p style="margin-top:16px;"><b>The honest v2 pitch.</b> τ-chrono v2 = the τ-framework primitive (F<sub>anomaly</sub>) + best generic QEM on top + a vendor-neutral cross-platform F estimator. The τ-specific layer wins <b>1.41× incremental precision</b> over the Mitiq PS+ZNE baseline (verified A/B test, May 2026) and 4–8× cheaper calibration; the generic-QEM layers do most of the absolute error reduction.</p>
     </div>
   </div>
 </section>

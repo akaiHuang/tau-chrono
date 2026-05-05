@@ -121,9 +121,12 @@ The honest summary of v2's pitch is therefore:
 
 > **τ-chrono v2 = the τ-framework primitive (F_anomaly) + best generic
 > QEM on top + a vendor-neutral cross-platform F estimator.**
-> The τ-specific layer is what wins us 1.7× incremental precision over
-> generic QEM and 4–8× cheaper calibration than Mitiq ZNE/PEC; the
-> generic-QEM layers do most of the absolute error reduction.
+> The τ-specific layer wins us **1.41× incremental precision** over
+> generic QEM (verified A/B test against the Mitiq library on Tuna-17
+> q2-q5, May 2026: Mitiq PS+ZNE alone = 29.6 mHa, Mitiq PS + τ-ABR +
+> Mitiq ZNE = 21.0 mHa, both consuming the same 6 hardware circuits)
+> plus 4–8× cheaper calibration than Mitiq ZNE/PEC; the generic-QEM
+> layers do most of the absolute error reduction.
 
 4. **What tau-chrono is not**: it is not a separate theory. Every
    prediction it makes is an immediate consequence of Paper 1's
@@ -183,12 +186,20 @@ honestly contribute, and what they do not:
    transmon hardware exists.
 
 3. **Incremental practical value over generic QEM — quantified at
-   1.7×.** On the H₂ accuracy push (Tuna-17 q2-q5, April 2026),
-   stripping out the τ-specific layer (per-Pauli (F, bias) ABR) and
-   running pure generic QEM (Symmetry PS + ZNE) on the same data
-   gives ~22 mHa. Adding the τ layer brings it to 13 mHa. So **τ
-   contributes 1.7× incremental precision on top of the best
-   generic-QEM baseline** — a small but *measured* effect.
+   1.41× via a strict A/B test against the Mitiq library.** A
+   May 2026 controlled experiment ran two pipelines on the same
+   6 Tuna-17 q2-q5 hardware circuits: **A** = Mitiq symmetry-
+   verification PS + Mitiq linear-ZNE; **B** = Mitiq PS + τ-chrono
+   per-Pauli (F, bias) ABR + Mitiq ZNE. Pipeline A gave 29.6 mHa;
+   pipeline B gave 21.0 mHa. The 8.6 mHa absolute / **1.41× relative
+   improvement is the pure τ marginal contribution**, since the only
+   variable between the two is whether τ's ABR layer is applied.
+   Raw data + script: `experiments/h2_mitiq_vs_mitiq_plus_tau.py`,
+   `data/iqm_4platform_validation/h2_mitiq_vs_mitiq_plus_tau_tuna17_20260505_202917.json`.
+
+   *Historical note*: an earlier hand-rolled comparison (our PS + own
+   ZNE math vs same + τ) gave 1.7×; the proper Mitiq-library A/B
+   gives 1.41×. We use 1.41× going forward as the verified number.
 
 4. **Anomalous (negative-probability) weak values at 10.1–14.9σ
    significance** across 4 transmon backends. Predicted by Aharonov-
@@ -221,7 +232,7 @@ honestly contribute, and what they do not:
 | F_anomaly best pair on Tuna-17 | 0.799 (q2–q5) | Why the best pair coincides numerically with Tuna-9 average |
 | T_anomaly bare / DD on Tuna-9 | 101 ns / ~500 ns | Closed-form decay envelope from gate-level `R̃_{σ,N}` |
 | 24-pair F_anomaly spread on Tuna-17 | 0.825 (range −0.025 → +0.799) | Non-uniformity model derived from per-coupler Hamiltonian |
-| τ-incremental mitigation gain | 1.7× over PS+ZNE baseline | Variance-reduction proof for per-Pauli (F, bias) vs. global F |
+| τ-incremental mitigation gain | **1.41× over Mitiq PS+ZNE baseline** (verified A/B, May 2026) | Variance-reduction proof for per-Pauli (F, bias) vs. global F |
 
 The thesis: **Paper 1 gives the formula; τ-chrono gives the formula
 hardware-side numbers it must one day predict from first principles.**
@@ -465,10 +476,19 @@ generic QEM techniques; the τ-specific contribution is the per-Pauli
 **Honest decomposition of τ's marginal contribution.** Removing the
 τ-specific ABR layer and running just the two generic-QEM layers
 (symmetry PS + ZNE) on the same data gives ∼ 22 mHa. Adding the τ
-ABR layer brings it to 13 mHa — i.e. **τ contributes a 1.7×
-incremental precision improvement on top of the best generic-QEM
-baseline**, plus the calibration efficiency advantage (single weak-value
-probe vs. 30+ noise-amplified circuits for ZNE alone).
+ABR layer brings it to 13 mHa.
+
+**Update (May 2026, verified A/B against Mitiq library):** A strict
+controlled experiment using the Mitiq library's own symmetry-
+verification PS + linear-ZNE pipeline as the baseline, sharing the
+same 6 hardware circuits with a "+ τ ABR" version, gives **Mitiq
+alone = 29.6 mHa, Mitiq + τ = 21.0 mHa → 1.41× incremental τ
+contribution**. We use **1.41× as the verified number**; the earlier
+1.7× came from a hand-rolled comparison and is superseded.
+
+τ also gives a **calibration efficiency** advantage (single weak-value
+probe vs. 30+ noise-amplified circuits for ZNE alone) that the A/B
+test does not capture.
 
 **Why we stopped at 13 mHa rather than pushing further.** The
 remaining gap to chemical accuracy is dominated by the residual
@@ -622,9 +642,9 @@ Adjust noise type, error rate, and circuit depth interactively.
    accuracy target. The dominant residual is the coherent two-qubit
    gate error on a 98–99%-fidelity chip; no NISQ-class EM technique
    we know of can close this gap on this hardware tier. The honest
-   τ pitch is **1.7× extra precision over best generic-QEM baseline +
-   4–8× cheaper calibration**, not "we hit chemical accuracy on
-   Tuna".
+   τ pitch is **1.41× extra precision over Mitiq PS+ZNE baseline
+   (verified A/B, May 2026) + 4–8× cheaper calibration**, not "we hit
+   chemical accuracy on Tuna".
 3. **Anomaly coherence is fragile.** `T_anomaly = 101 ns bare` is
    approximately two orders of magnitude shorter than typical transmon
    `T_2*` (~5–50 µs depending on device and dressing). Long past–future
